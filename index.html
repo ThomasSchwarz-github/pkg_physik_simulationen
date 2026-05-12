@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Luftkissenbahn – Federabstoßung</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue-dark: #0C447C;
+    --blue-mid: #185FA5;
+    --blue-light: #E6F1FB;
+    --blue-border: #B5D4F4;
+    --teal-dark: #0F6E56;
+    --teal-mid: #1D9E75;
+    --teal-light: #E1F5EE;
+    --teal-border: #9FE1CB;
+    --amber-dark: #854F0B;
+    --amber-mid: #BA7517;
+    --amber-light: #FAEEDA;
+    --amber-border: #FAC775;
+    --gray-bg: #F8F7F4;
+    --gray-border: #D3D1C7;
+    --gray-text: #5F5E5A;
+    --text-main: #1a1917;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'IBM Plex Sans', sans-serif; background: #f5f3ef; color: var(--text-main); min-height: 100vh; }
+  .page { max-width: 860px; margin: 0 auto; padding: 2.5rem 2rem; }
+
+  .header { border-bottom: 2px solid var(--text-main); padding-bottom: 1.2rem; margin-bottom: 2rem; }
+  .header .kurs { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gray-text); font-weight: 500; margin-bottom: 0.4rem; }
+  .header h1 { font-family: 'Source Serif 4', serif; font-size: 2rem; font-weight: 600; line-height: 1.2; }
+  .header .meta { margin-top: 0.5rem; font-size: 13px; color: var(--gray-text); }
+
+  .intro-box { background: var(--blue-light); border-left: 3px solid var(--blue-mid); padding: 1rem 1.25rem; margin-bottom: 2rem; border-radius: 0 6px 6px 0; }
+  .intro-box p { font-size: 14.5px; line-height: 1.7; color: var(--blue-dark); }
+
+  .sim-card { background: white; border: 1px solid var(--gray-border); border-radius: 10px; padding: 1.5rem; margin-bottom: 2rem; }
+  .sim-card h2 { font-family: 'Source Serif 4', serif; font-size: 1.15rem; font-weight: 600; margin-bottom: 1.25rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--gray-border); }
+
+  .controls-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem; }
+  .control-box { background: var(--gray-bg); border: 1px solid var(--gray-border); border-radius: 8px; padding: 0.85rem 1rem; }
+  .control-box.left-side { border-top: 3px solid var(--blue-mid); }
+  .control-box.right-side { border-top: 3px solid var(--teal-mid); }
+  .control-box .glider-label { font-size: 12px; font-weight: 600; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+  .control-box.left-side .glider-label { color: var(--blue-dark); }
+  .control-box.right-side .glider-label { color: var(--teal-dark); }
+  .slider-row { display: flex; align-items: center; gap: 0.6rem; }
+  .slider-row label { font-size: 13px; color: var(--gray-text); width: 80px; flex-shrink: 0; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--blue-mid); height: 4px; }
+  .control-box.right-side .slider-row input[type=range] { accent-color: var(--teal-mid); }
+  .slider-row .val { font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 500; min-width: 52px; text-align: right; }
+
+  .canvas-wrap { background: #fafaf8; border: 1px solid var(--gray-border); border-radius: 8px; padding: 1rem 0.5rem 0.5rem; margin-bottom: 1.25rem; overflow: hidden; }
+  canvas { display: block; width: 100%; }
+
+  .lichtschranke-info { display: flex; gap: 0.75rem; }
+  .ls-badge { flex: 1; background: var(--gray-bg); border: 1px solid var(--gray-border); border-radius: 6px; padding: 0.5rem 0.75rem; font-size: 12px; display: flex; align-items: center; gap: 0.4rem; }
+  .ls-badge .ls-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--gray-border); }
+  .ls-badge.active-left .ls-dot { background: var(--blue-mid); animation: blink 0.3s ease; }
+  .ls-badge.active-right .ls-dot { background: var(--teal-mid); animation: blink 0.3s ease; }
+  @keyframes blink { 0%{opacity:0} 100%{opacity:1} }
+  .ls-val { font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 500; margin-left: auto; }
+  .ls-badge.active-left .ls-val { color: var(--blue-dark); }
+  .ls-badge.active-right .ls-val { color: var(--teal-dark); }
+
+  .btn-row { display: flex; gap: 0.75rem; align-items: center; margin-top: 1rem; margin-bottom: 1rem; }
+  button { font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 0.5rem 1.1rem; border-radius: 6px; cursor: pointer; transition: all 0.15s; border: 1px solid var(--gray-border); }
+  .btn-start { background: var(--text-main); color: white; border-color: var(--text-main); }
+  .btn-start:hover { background: #333; }
+  .btn-start:disabled { background: #aaa; border-color: #aaa; cursor: not-allowed; }
+  .btn-reset { background: white; color: var(--text-main); }
+  .btn-reset:hover { background: var(--gray-bg); }
+  .btn-record { background: var(--amber-light); color: var(--amber-dark); border-color: var(--amber-border); margin-left: auto; }
+  .btn-record:hover { background: var(--amber-border); }
+  .btn-record:disabled { opacity: 0.4; cursor: not-allowed; }
+  .status-msg { font-size: 12.5px; color: var(--gray-text); font-style: italic; padding: 0.4rem 0; }
+
+  .result-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6rem; }
+  .result-cell { background: var(--gray-bg); border: 1px solid var(--gray-border); border-radius: 6px; padding: 0.6rem 0.75rem; text-align: center; }
+  .result-cell .rc-label { font-size: 11px; color: var(--gray-text); margin-bottom: 0.25rem; }
+  .result-cell .rc-value { font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 500; }
+  .result-cell.blue-cell { background: var(--blue-light); border-color: var(--blue-border); }
+  .result-cell.blue-cell .rc-value { color: var(--blue-dark); }
+  .result-cell.teal-cell { background: var(--teal-light); border-color: var(--teal-border); }
+  .result-cell.teal-cell .rc-value { color: var(--teal-dark); }
+
+  .table-section { background: white; border: 1px solid var(--gray-border); border-radius: 10px; padding: 1.5rem; margin-bottom: 2rem; }
+  .table-section h2 { font-family: 'Source Serif 4', serif; font-size: 1.15rem; font-weight: 600; margin-bottom: 0.3rem; }
+  .table-hint { font-size: 13px; color: var(--gray-text); margin-bottom: 1rem; }
+
+  table.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.data-table th { background: var(--gray-bg); border: 1px solid var(--gray-border); padding: 0.6rem 0.75rem; font-weight: 600; text-align: center; font-size: 12px; color: var(--gray-text); }
+  table.data-table td { border: 1px solid var(--gray-border); padding: 0.55rem 0.75rem; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 13px; }
+  table.data-table tr:nth-child(even) td { background: #fafaf8; }
+  table.data-table .m1 { color: var(--blue-dark); }
+  table.data-table .m2 { color: var(--teal-dark); }
+  .table-btn-row { margin-top: 0.85rem; }
+  .btn-clear { font-family: 'IBM Plex Sans', sans-serif; font-size: 12px; font-weight: 500; padding: 0.4rem 0.9rem; border-radius: 5px; cursor: pointer; background: white; border: 1px solid var(--gray-border); color: var(--gray-text); }
+  .btn-clear:hover { background: var(--gray-bg); }
+  .empty-row td { color: #ccc; font-style: italic; font-family: 'IBM Plex Sans', sans-serif; font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="kurs">Physik · Jahrgangsstufe EF · Mechanik</div>
+    <h1>Federabstoßung auf der Luftkissenbahn</h1>
+    <div class="meta">Interaktives Experiment · Zwei Gleiter, zusammengedrückte Feder</div>
+  </div>
+
+  <div class="intro-box">
+    <p>Auf einer nahezu reibungsfreien Luftkissenbahn befinden sich zwei Gleiter, zwischen denen eine Feder zusammengedrückt ist. Wenn die Feder losgelassen wird, stoßen sich die Gleiter auseinander. Untersuche, wie die Massen der Gleiter die Bewegung nach dem Abstoßen beeinflussen – und welche Größe dabei erhalten bleibt.</p>
+  </div>
+
+  <div class="sim-card">
+    <h2>Versuchsaufbau &amp; Simulation</h2>
+
+    <div class="controls-grid">
+      <div class="control-box left-side">
+        <div class="glider-label">Gleiter 1 (links, blau)</div>
+        <div class="slider-row">
+          <label>Masse m₁</label>
+          <input type="range" id="m1" min="100" max="600" step="50" value="200">
+          <span class="val" id="m1-val">200 g</span>
+        </div>
+      </div>
+      <div class="control-box right-side">
+        <div class="glider-label">Gleiter 2 (rechts, grün)</div>
+        <div class="slider-row">
+          <label>Masse m₂</label>
+          <input type="range" id="m2" min="100" max="600" step="50" value="200">
+          <span class="val" id="m2-val">200 g</span>
+        </div>
+      </div>
+      <div class="control-box spring-box" style="grid-column: 1 / -1; border-top: 3px solid var(--amber-mid);">
+        <div class="glider-label" style="color: var(--amber-dark);">Feder – gespeicherte Energie</div>
+        <div class="slider-row">
+          <label style="width:120px;">Federenergie E</label>
+          <input type="range" id="energy" min="0.02" max="0.5" step="0.02" value="0.12" style="accent-color: var(--amber-mid);">
+          <span class="val" id="energy-val">0,12 J</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="canvas-wrap">
+      <canvas id="track" height="160"></canvas>
+    </div>
+
+    <div class="lichtschranke-info">
+      <div class="ls-badge" id="ls-left">
+        <div class="ls-dot"></div>
+        <span>Lichtschranke links</span>
+        <span class="ls-val" id="ls-left-val">— m/s</span>
+      </div>
+      <div class="ls-badge" id="ls-right">
+        <div class="ls-dot"></div>
+        <span>Lichtschranke rechts</span>
+        <span class="ls-val" id="ls-right-val">— m/s</span>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-start" id="btn-start">▶ Feder lösen</button>
+      <button class="btn-reset" id="btn-reset">↺ Zurücksetzen</button>
+      <span class="status-msg" id="status-msg"></span>
+      <button class="btn-record" id="btn-record" disabled>+ Messung speichern</button>
+    </div>
+
+    <div class="result-strip">
+      <div class="result-cell blue-cell">
+        <div class="rc-label">v₁ (Gleiter 1)</div>
+        <div class="rc-value" id="res-v1">—</div>
+      </div>
+      <div class="result-cell blue-cell">
+        <div class="rc-label">m₁ · v₁</div>
+        <div class="rc-value" id="res-p1">—</div>
+      </div>
+      <div class="result-cell teal-cell">
+        <div class="rc-label">v₂ (Gleiter 2)</div>
+        <div class="rc-value" id="res-v2">—</div>
+      </div>
+      <div class="result-cell teal-cell">
+        <div class="rc-label">m₂ · v₂</div>
+        <div class="rc-value" id="res-p2">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-section">
+    <h2>Messtabelle</h2>
+    <div class="table-hint">Notiere mindestens 5 Messungen mit verschiedenen Massenkombinationen.</div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th style="color:var(--blue-dark)">m₁ [g]</th>
+          <th style="color:var(--blue-dark)">v₁ [m/s]</th>
+          <th style="color:var(--blue-dark)">m₁ · v₁ [g·m/s]</th>
+          <th style="color:var(--teal-dark)">m₂ [g]</th>
+          <th style="color:var(--teal-dark)">v₂ [m/s]</th>
+          <th style="color:var(--teal-dark)">m₂ · v₂ [g·m/s]</th>
+        </tr>
+      </thead>
+      <tbody id="table-body">
+        <tr class="empty-row">
+          <td colspan="7">Noch keine Messungen – führe das Experiment durch und klicke „Messung speichern"</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="table-btn-row">
+      <button class="btn-clear" onclick="clearTable()">Tabelle leeren</button>
+    </div>
+  </div>
+
+</div>
+<script>
+  const canvas = document.getElementById('track');
+  const ctx = canvas.getContext('2d');
+
+  let animFrame = null;
+  let state = 'idle';
+  let measureCount = 0;
+  let glider1 = {}, glider2 = {};
+  let v1_final = 0, v2_final = 0;
+  let ls1_triggered = false, ls2_triggered = false;
+
+  // springState: 'compressed' | 'expanding' | 'free'
+  let springState = 'compressed';
+  let springT = 0;
+  let springFreeX = 0, springFreeY = 0;
+  let lastTs = null;
+
+  const EXPAND_DUR = 0.13; // seconds for spring to expand
+  const SPEED_SCALE = 110; // px per second per (m/s)
+  const TRACK_Y = () => Math.round(H() * 0.45);
+
+  function W() { return canvas.offsetWidth || 760; }
+  function H() { return 160; }
+  function getM1() { return parseInt(document.getElementById('m1').value); }
+  function getM2() { return parseInt(document.getElementById('m2').value); }
+
+  document.getElementById('m1').addEventListener('input', function() {
+    document.getElementById('m1-val').textContent = this.value + ' g';
+    if (state === 'idle') initGliders();
+  });
+  document.getElementById('m2').addEventListener('input', function() {
+    document.getElementById('m2-val').textContent = this.value + ' g';
+    if (state === 'idle') initGliders();
+  });
+  document.getElementById('energy').addEventListener('input', function() {
+    document.getElementById('energy-val').textContent = parseFloat(this.value).toFixed(2).replace('.', ',') + ' J';
+  });
+  function getEnergy() { return parseFloat(document.getElementById('energy').value); }
+
+  function gliderWidth(mass) { return 36 + (mass / 600) * 32; }
+
+  function initGliders() {
+    const w = W(), cx = w / 2;
+    const m1 = getM1(), m2 = getM2();
+    const gw1 = gliderWidth(m1), gw2 = gliderWidth(m2);
+    glider1 = { x: cx - gw1 - 5, w: gw1, m: m1, v: 0 };
+    glider2 = { x: cx + 5, w: gw2, m: m2, v: 0 };
+    v1_final = 0; v2_final = 0;
+    ls1_triggered = false; ls2_triggered = false;
+    springState = 'compressed'; springT = 0;
+    draw();
+  }
+
+  /* ---- Drawing ---- */
+  function draw() {
+    const w = W(), h = H();
+    canvas.width = w; canvas.height = h;
+    const ty = TRACK_Y();
+    ctx.clearRect(0, 0, w, h);
+
+    const pad = 28;
+    ctx.fillStyle = '#D3D1C7';
+    ctx.fillRect(pad, ty + 18, w - pad * 2, 8);
+    ctx.fillStyle = '#888780';
+    ctx.fillRect(pad, ty + 16, w - pad * 2, 3);
+
+    const ls1x = pad + 62, ls2x = w - pad - 62;
+    drawLS(ls1x, ty, '#185FA5', ls1_triggered);
+    drawLS(ls2x, ty, '#1D9E75', ls2_triggered);
+    ctx.font = '10px IBM Plex Mono,monospace';
+    ctx.fillStyle = '#888780'; ctx.textAlign = 'center';
+    ctx.fillText('LS 1', ls1x, ty - 40);
+    ctx.fillText('LS 2', ls2x, ty - 40);
+
+    // Spring
+    if (springState === 'compressed') {
+      drawSpringBetween(glider1.x + glider1.w, glider2.x, ty, 0);
+    } else if (springState === 'expanding') {
+      drawSpringBetween(glider1.x + glider1.w, glider2.x, ty, springT);
+    } else {
+      drawSpringFree(springFreeX, springFreeY);
+    }
+
+    drawGlider(glider1, ty, '#185FA5', '#E6F1FB');
+    drawGlider(glider2, ty, '#1D9E75', '#E1F5EE');
+
+    if (state === 'done') {
+      drawArrow(glider1, ty, -1, '#185FA5');
+      drawArrow(glider2, ty, +1, '#1D9E75');
+    }
+  }
+
+  function drawLS(x, ty, color, on) {
+    const t = ty - 32, b = ty + 26;
+    ctx.strokeStyle = on ? color : '#D3D1C7';
+    ctx.lineWidth = on ? 2 : 1;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(x, t); ctx.lineTo(x, b); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = on ? color : '#B4B2A9';
+    [t - 2, b + 2].forEach(cy => {
+      ctx.beginPath(); ctx.arc(x, cy, 5, 0, Math.PI * 2); ctx.fill();
+    });
+  }
+
+  function drawGlider(g, ty, stroke, fill) {
+    const gh = 28 + (g.m / 600) * 10, y = ty - gh + 2;
+    rrect(g.x, y, g.w, gh, 4);
+    ctx.fillStyle = fill; ctx.fill();
+    ctx.strokeStyle = stroke; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = stroke;
+    ctx.font = 'bold 11px IBM Plex Sans,sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(g.m + 'g', g.x + g.w / 2, y + gh / 2 + 4);
+    const wy = ty + 16;
+    [g.x + 8, g.x + g.w - 8].forEach(wx => {
+      ctx.beginPath(); ctx.arc(wx, wy, 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#B4B2A9'; ctx.fill();
+      ctx.strokeStyle = '#888'; ctx.lineWidth = 1; ctx.stroke();
+    });
+  }
+
+  function drawSpringBetween(x1, x2, ty, t) {
+    const gap = x2 - x1; if (gap < 2) return;
+    const y = ty - 14, coils = 7;
+    const amp = Math.max(3, gap * 0.2) * (0.35 + 0.65 * t);
+    ctx.strokeStyle = '#BA7517'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(x1, y);
+    for (let i = 0; i <= coils * 2; i++) {
+      const s = i / (coils * 2);
+      ctx.lineTo(x1 + s * gap, y + (i % 2 === 0 ? -amp : amp));
+    }
+    ctx.lineTo(x2, y); ctx.stroke();
+  }
+
+  function drawSpringFree(cx, cy) {
+    const len = 22, coils = 5, amp = 4;
+    const x1 = cx - len / 2, x2 = cx + len / 2;
+    ctx.strokeStyle = '#BA7517'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(x1, cy);
+    for (let i = 0; i <= coils * 2; i++) {
+      const s = i / (coils * 2);
+      ctx.lineTo(x1 + s * len, cy + (i % 2 === 0 ? -amp : amp));
+    }
+    ctx.lineTo(x2, cy); ctx.stroke();
+  }
+
+  function drawArrow(g, ty, dir, color) {
+    const ax = dir < 0 ? g.x - 10 : g.x + g.w + 10, ay = ty - 16;
+    ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(dir < 0 ? ax + 20 : ax - 20, ay);
+    ctx.lineTo(ax, ay); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(ax, ay - 5); ctx.lineTo(ax + dir * 8, ay); ctx.lineTo(ax, ay + 5);
+    ctx.fill();
+  }
+
+  function rrect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
+  /* ---- Physics ---- */
+  function computeVelocities(m1, m2) {
+    // Use slider energy; impulse conservation: m1*v1 = m2*v2
+    const E = getEnergy();
+    const v2 = Math.sqrt(2 * E / (m2 / 1000 * (1 + m2 / m1)));
+    const v1 = (m2 / m1) * v2;
+    return { v1: parseFloat(v1.toFixed(3)), v2: parseFloat(v2.toFixed(3)) };
+  }
+
+  function startExperiment() {
+    if (state === 'running') return;
+    state = 'running';
+    springState = 'expanding'; springT = 0;
+    ls1_triggered = false; ls2_triggered = false;
+    lastTs = null;
+
+    ['btn-start'].forEach(id => document.getElementById(id).disabled = true);
+    document.getElementById('btn-record').disabled = true;
+    document.getElementById('status-msg').textContent = 'Feder entspannt sich…';
+    document.getElementById('ls-left').className = 'ls-badge';
+    document.getElementById('ls-right').className = 'ls-badge';
+    document.getElementById('ls-left-val').textContent = '— m/s';
+    document.getElementById('ls-right-val').textContent = '— m/s';
+    ['res-v1','res-v2','res-p1','res-p2'].forEach(id => document.getElementById(id).textContent = '—');
+
+    const m1 = getM1(), m2 = getM2();
+    const vels = computeVelocities(m1, m2);
+    v1_final = vels.v1; v2_final = vels.v2;
+    glider1.v = -v1_final * SPEED_SCALE;
+    glider2.v =  v2_final * SPEED_SCALE;
+
+    requestAnimationFrame(animate);
+  }
+
+  function animate(ts) {
+    if (!lastTs) lastTs = ts;
+    const dt = Math.min((ts - lastTs) / 1000, 0.05);
+    lastTs = ts;
+
+    const w = W(), pad = 28;
+    const ls1x = pad + 62, ls2x = w - pad - 62;
+    const ty = TRACK_Y();
+
+    if (springState === 'expanding') {
+      springT += dt / EXPAND_DUR;
+      // move gliders while spring pushes
+      glider1.x += glider1.v * dt;
+      glider2.x += glider2.v * dt;
+
+      if (springT >= 1) {
+        springState = 'free';
+        springFreeX = (glider1.x + glider1.w + glider2.x) / 2;
+        springFreeY = ty - 14;
+        document.getElementById('status-msg').textContent = 'Gleiter in Bewegung…';
+      }
+    } else if (springState === 'free') {
+      glider1.x += glider1.v * dt;
+      glider2.x += glider2.v * dt;
+
+      if (!ls1_triggered && (glider1.x + glider1.w) < ls1x) {
+        ls1_triggered = true;
+        document.getElementById('ls-left').className = 'ls-badge active-left';
+        document.getElementById('ls-left-val').textContent = v1_final.toFixed(3) + ' m/s';
+      }
+      if (!ls2_triggered && glider2.x > ls2x) {
+        ls2_triggered = true;
+        document.getElementById('ls-right').className = 'ls-badge active-right';
+        document.getElementById('ls-right-val').textContent = v2_final.toFixed(3) + ' m/s';
+      }
+    }
+
+    draw();
+
+    const done1 = glider1.x + glider1.w < pad + 2;
+    const done2 = glider2.x > w - pad - glider2.w - 2;
+
+    if (springState === 'free' && ls1_triggered && ls2_triggered && done1 && done2) {
+      state = 'done';
+      showResults(getM1(), getM2(), v1_final, v2_final);
+      draw(); // final frame with arrows
+      return;
+    }
+
+    animFrame = requestAnimationFrame(animate);
+  }
+
+  function showResults(m1, m2, v1, v2) {
+    const prod1 = (m1 * v1).toFixed(1);
+    const prod2 = (m2 * v2).toFixed(1);
+    document.getElementById('res-v1').textContent = '← ' + v1.toFixed(3) + ' m/s';
+    document.getElementById('res-v2').textContent = v2.toFixed(3) + ' m/s →';
+    document.getElementById('res-p1').textContent = prod1 + ' g·m/s';
+    document.getElementById('res-p2').textContent = prod2 + ' g·m/s';
+    document.getElementById('btn-record').disabled = false;
+    document.getElementById('btn-start').disabled = false;
+    document.getElementById('status-msg').textContent = 'Messung abgeschlossen ✓';
+  }
+
+  document.getElementById('btn-start').addEventListener('click', startExperiment);
+
+  document.getElementById('btn-reset').addEventListener('click', function() {
+    if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+    lastTs = null; state = 'idle';
+    springState = 'compressed'; springT = 0;
+    ls1_triggered = false; ls2_triggered = false;
+    document.getElementById('btn-start').disabled = false;
+    document.getElementById('btn-record').disabled = true;
+    document.getElementById('status-msg').textContent = '';
+    document.getElementById('ls-left').className = 'ls-badge';
+    document.getElementById('ls-right').className = 'ls-badge';
+    document.getElementById('ls-left-val').textContent = '— m/s';
+    document.getElementById('ls-right-val').textContent = '— m/s';
+    ['res-v1','res-v2','res-p1','res-p2'].forEach(id => document.getElementById(id).textContent = '—');
+    initGliders();
+  });
+
+  document.getElementById('btn-record').addEventListener('click', function() {
+    const m1 = getM1(), m2 = getM2();
+    const prod1 = (m1 * v1_final).toFixed(1);
+    const prod2 = (m2 * v2_final).toFixed(1);
+    measureCount++;
+    const tbody = document.getElementById('table-body');
+    tbody.querySelectorAll('.empty-row').forEach(e => e.remove());
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${measureCount}</td>
+      <td class="m1">${m1}</td>
+      <td class="m1">← ${v1_final.toFixed(3)}</td>
+      <td class="m1">${prod1}</td>
+      <td class="m2">${m2}</td>
+      <td class="m2">${v2_final.toFixed(3)} →</td>
+      <td class="m2">${prod2}</td>`;
+    tbody.appendChild(tr);
+    this.disabled = true;
+    document.getElementById('status-msg').textContent = 'Messung #' + measureCount + ' gespeichert.';
+  });
+
+  function clearTable() {
+    document.getElementById('table-body').innerHTML =
+      '<tr class="empty-row"><td colspan="7">Noch keine Messungen – führe das Experiment durch und klicke „Messung speichern"</td></tr>';
+    measureCount = 0;
+  }
+
+  window.addEventListener('resize', () => { if (state === 'idle') initGliders(); });
+  initGliders();
+</script>
+</body>
+</html>
