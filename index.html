@@ -51,9 +51,13 @@
 
   /* ── Header ── */
   .site-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
     border-bottom: 2px solid var(--text-main);
     padding-bottom: 1.4rem;
     margin-bottom: 2.5rem;
+    gap: 1.5rem;
   }
   .site-header .eyebrow {
     font-size: 11px;
@@ -75,6 +79,11 @@
     color: var(--gray-text);
     line-height: 1.6;
     max-width: 580px;
+  }
+  .site-logo {
+    max-height: 64px;
+    width: auto;
+    align-self: flex-start;
   }
 
   /* ── Intro box ── */
@@ -289,9 +298,12 @@
 
   <!-- ── Site Header ── -->
   <header class="site-header">
-    <p class="eyebrow">Interaktive Lernmaterialien · Physik</p>
-    <h1>Physik-Simulationen</h1>
-    <p class="subtitle">Interaktive Experimente und Visualisierungen für den Physikunterricht – sortiert nach Jahrgangsstufe und Thema gemäß des schulinternen Lehrplans des Paul-Klee-Gymnasiums Overath.</p>
+    <div>
+      <p class="eyebrow">Interaktive Lernmaterialien · Physik</p>
+      <h1>Physik-Simulationen</h1>
+      <p class="subtitle">Interaktive Experimente und Visualisierungen für den Physikunterricht – sortiert nach Jahrgangsstufe und Thema gemäß des schulinternen Lehrplans des Paul-Klee-Gymnasiums Overath.</p>
+    </div>
+    <img src="assets/pkg_hauptlogo_web_kleiner.png" alt="Logo" class="site-logo">
   </header>
 
   <div class="intro-box">
