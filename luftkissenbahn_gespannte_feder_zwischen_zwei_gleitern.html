@@ -115,7 +115,7 @@
   </div>
 
   <div class="intro-box">
-    <p>Auf einer nahezu reibungsfreien Luftkissenbahn befinden sich zwei Gleiter, zwischen denen eine Feder zusammengedrückt ist. Wenn die Feder losgelassen wird, stoßen sich die Gleiter auseinander. Untersuche, wie die Massen der Gleiter die Bewegung nach dem Abstoßen beeinflussen – und welche Größe dabei erhalten bleibt.</p>
+    <p>Auf einer nahezu reibungsfreien Luftkissenbahn befinden sich zwei Gleiter, zwischen denen eine Feder zusammengedrückt ist. Wenn die Feder losgelassen wird, stoßen sich die Gleiter auseinander. Mit Zwei Lichtschranken werden die Geschwindigkeiten der beiden Gleiter gemessen. Untersuche, wie die Massen der Gleiter die Bewegung nach dem Abstoßen beeinflussen – und welche Größe dabei erhalten bleibt.</p>
   </div>
 
   <div class="sim-card">
@@ -250,6 +250,10 @@
   function getEnergy() { return parseFloat(document.getElementById('energy').value); }
 
   function gliderWidth(mass) { return 36 + (mass / 600) * 32; }
+
+  function formatNumberDE(num, decimals) {
+    return Number(num).toFixed(decimals).replace('.', ',');
+  }
 
   function initGliders() {
     const w = W(), cx = w / 2;
@@ -440,12 +444,12 @@
       if (!ls1_triggered && (glider1.x + glider1.w) < ls1x) {
         ls1_triggered = true;
         document.getElementById('ls-left').className = 'ls-badge active-left';
-        document.getElementById('ls-left-val').textContent = v1_final.toFixed(3) + ' m/s';
+        document.getElementById('ls-left-val').textContent = formatNumberDE(v1_final, 3) + ' m/s';
       }
       if (!ls2_triggered && glider2.x > ls2x) {
         ls2_triggered = true;
         document.getElementById('ls-right').className = 'ls-badge active-right';
-        document.getElementById('ls-right-val').textContent = v2_final.toFixed(3) + ' m/s';
+        document.getElementById('ls-right-val').textContent = formatNumberDE(v2_final, 3) + ' m/s';
       }
     }
 
@@ -465,8 +469,8 @@
   }
 
   function showResults(m1, m2, v1, v2) {
-    document.getElementById('res-v1').textContent = '← ' + v1.toFixed(3) + ' m/s';
-    document.getElementById('res-v2').textContent = v2.toFixed(3) + ' m/s →';
+    document.getElementById('res-v1').textContent = '← ' + formatNumberDE(v1, 3) + ' m/s';
+    document.getElementById('res-v2').textContent = formatNumberDE(v2, 3) + ' m/s →';
     document.getElementById('btn-record').disabled = false;
     document.getElementById('btn-start').disabled = false;
     document.getElementById('status-msg').textContent = 'Messung abgeschlossen ✓';
@@ -498,9 +502,9 @@
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${measureCount}</td>
       <td class="m1">${m1}</td>
-      <td class="m1">← ${v1_final.toFixed(3)}</td>
+      <td class="m1">← ${formatNumberDE(v1_final, 3)}</td>
       <td class="m2">${m2}</td>
-      <td class="m2">${v2_final.toFixed(3)} →</td>`;
+      <td class="m2">${formatNumberDE(v2_final, 3)} →</td>`;
     tbody.appendChild(tr);
     this.disabled = true;
     document.getElementById('status-msg').textContent = 'Messung #' + measureCount + ' gespeichert.';
@@ -525,9 +529,11 @@
     csvLines.push(headers.join(';'));
 
     rows.forEach(row => {
-      const values = Array.from(row.querySelectorAll('td')).map(td =>
-        td.textContent.trim().replace('← ', '').replace(' →', '')
-      );
+      const values = Array.from(row.querySelectorAll('td')).map(td => {
+        let v = td.textContent.trim().replace('← ', '').replace(' →', '');
+        v = v.replace(/\./g, ',');
+        return v;
+      });
       csvLines.push(values.map(value => '"' + value.replace(/"/g, '""') + '"').join(';'));
     });
 
