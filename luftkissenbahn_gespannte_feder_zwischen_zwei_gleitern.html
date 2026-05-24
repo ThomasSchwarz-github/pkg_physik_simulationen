@@ -539,16 +539,18 @@
     }
 
     const headers = ['#', 'm1 [g]', 'v1 [m/s]', 'm1 · v1 [g·m/s]', 'm2 [g]', 'v2 [m/s]', 'm2 · v2 [g·m/s]'];
-    const csvLines = [headers.join(',')];
+    const csvLines = ['sep=;'];
+    csvLines.push(headers.join(';'));
 
     rows.forEach(row => {
       const values = Array.from(row.querySelectorAll('td')).map(td =>
         td.textContent.trim().replace('← ', '').replace(' →', '')
       );
-      csvLines.push(values.map(value => '"' + value.replace(/"/g, '""') + '"').join(','));
+      csvLines.push(values.map(value => '"' + value.replace(/"/g, '""') + '"').join(';'));
     });
 
-    const blob = new Blob([csvLines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+    const csvContent = '\uFEFF' + csvLines.join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
