@@ -78,7 +78,7 @@
   .btn-record:disabled { opacity: 0.4; cursor: not-allowed; }
   .status-msg { font-size: 12.5px; color: var(--gray-text); font-style: italic; padding: 0.4rem 0; }
 
-  .result-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6rem; }
+  .result-strip { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.6rem; }
   .result-cell { background: var(--gray-bg); border: 1px solid var(--gray-border); border-radius: 6px; padding: 0.6rem 0.75rem; text-align: center; }
   .result-cell .rc-label { font-size: 11px; color: var(--gray-text); margin-bottom: 0.25rem; }
   .result-cell .rc-value { font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 500; }
@@ -177,17 +177,9 @@
         <div class="rc-label">v₁ (Gleiter 1)</div>
         <div class="rc-value" id="res-v1">—</div>
       </div>
-      <div class="result-cell blue-cell">
-        <div class="rc-label">m₁ · v₁</div>
-        <div class="rc-value" id="res-p1">—</div>
-      </div>
       <div class="result-cell teal-cell">
         <div class="rc-label">v₂ (Gleiter 2)</div>
         <div class="rc-value" id="res-v2">—</div>
-      </div>
-      <div class="result-cell teal-cell">
-        <div class="rc-label">m₂ · v₂</div>
-        <div class="rc-value" id="res-p2">—</div>
       </div>
     </div>
   </div>
@@ -201,15 +193,13 @@
           <th>#</th>
           <th style="color:var(--blue-dark)">m₁ [g]</th>
           <th style="color:var(--blue-dark)">v₁ [m/s]</th>
-          <th style="color:var(--blue-dark)">m₁ · v₁ [g·m/s]</th>
           <th style="color:var(--teal-dark)">m₂ [g]</th>
           <th style="color:var(--teal-dark)">v₂ [m/s]</th>
-          <th style="color:var(--teal-dark)">m₂ · v₂ [g·m/s]</th>
         </tr>
       </thead>
       <tbody id="table-body">
         <tr class="empty-row">
-          <td colspan="7">Noch keine Messungen – führe das Experiment durch und klicke „Messung speichern"</td>
+          <td colspan="5">Noch keine Messungen – führe das Experiment durch und klicke „Messung speichern"</td>
         </tr>
       </tbody>
     </table>
@@ -411,7 +401,7 @@
     document.getElementById('ls-right').className = 'ls-badge';
     document.getElementById('ls-left-val').textContent = '— m/s';
     document.getElementById('ls-right-val').textContent = '— m/s';
-    ['res-v1','res-v2','res-p1','res-p2'].forEach(id => document.getElementById(id).textContent = '—');
+    ['res-v1','res-v2'].forEach(id => document.getElementById(id).textContent = '—');
 
     const m1 = getM1(), m2 = getM2();
     const vels = computeVelocities(m1, m2);
@@ -475,12 +465,8 @@
   }
 
   function showResults(m1, m2, v1, v2) {
-    const prod1 = (m1 * v1).toFixed(1);
-    const prod2 = (m2 * v2).toFixed(1);
     document.getElementById('res-v1').textContent = '← ' + v1.toFixed(3) + ' m/s';
     document.getElementById('res-v2').textContent = v2.toFixed(3) + ' m/s →';
-    document.getElementById('res-p1').textContent = prod1 + ' g·m/s';
-    document.getElementById('res-p2').textContent = prod2 + ' g·m/s';
     document.getElementById('btn-record').disabled = false;
     document.getElementById('btn-start').disabled = false;
     document.getElementById('status-msg').textContent = 'Messung abgeschlossen ✓';
@@ -500,14 +486,12 @@
     document.getElementById('ls-right').className = 'ls-badge';
     document.getElementById('ls-left-val').textContent = '— m/s';
     document.getElementById('ls-right-val').textContent = '— m/s';
-    ['res-v1','res-v2','res-p1','res-p2'].forEach(id => document.getElementById(id).textContent = '—');
+    ['res-v1','res-v2'].forEach(id => document.getElementById(id).textContent = '—');
     initGliders();
   });
 
   document.getElementById('btn-record').addEventListener('click', function() {
     const m1 = getM1(), m2 = getM2();
-    const prod1 = (m1 * v1_final).toFixed(1);
-    const prod2 = (m2 * v2_final).toFixed(1);
     measureCount++;
     const tbody = document.getElementById('table-body');
     tbody.querySelectorAll('.empty-row').forEach(e => e.remove());
@@ -515,10 +499,8 @@
     tr.innerHTML = `<td>${measureCount}</td>
       <td class="m1">${m1}</td>
       <td class="m1">← ${v1_final.toFixed(3)}</td>
-      <td class="m1">${prod1}</td>
       <td class="m2">${m2}</td>
-      <td class="m2">${v2_final.toFixed(3)} →</td>
-      <td class="m2">${prod2}</td>`;
+      <td class="m2">${v2_final.toFixed(3)} →</td>`;
     tbody.appendChild(tr);
     this.disabled = true;
     document.getElementById('status-msg').textContent = 'Messung #' + measureCount + ' gespeichert.';
@@ -526,7 +508,7 @@
 
   function clearTable() {
     document.getElementById('table-body').innerHTML =
-      '<tr class="empty-row"><td colspan="7">Noch keine Messungen – führe das Experiment durch und klicke „Messung speichern"</td></tr>';
+      '<tr class="empty-row"><td colspan="5">Noch keine Messungen – führe das Experiment durch und klicke „Messung speichern"</td></tr>';
     measureCount = 0;
   }
 
@@ -538,7 +520,7 @@
       return;
     }
 
-    const headers = ['#', 'm1 [g]', 'v1 [m/s]', 'm1 · v1 [g·m/s]', 'm2 [g]', 'v2 [m/s]', 'm2 · v2 [g·m/s]'];
+    const headers = ['#', 'm1 [g]', 'v1 [m/s]', 'm2 [g]', 'v2 [m/s]'];
     const csvLines = ['sep=;'];
     csvLines.push(headers.join(';'));
 
