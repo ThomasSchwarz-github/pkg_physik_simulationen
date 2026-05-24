@@ -97,9 +97,11 @@
   table.data-table tr:nth-child(even) td { background: #fafaf8; }
   table.data-table .m1 { color: var(--blue-dark); }
   table.data-table .m2 { color: var(--teal-dark); }
-  .table-btn-row { margin-top: 0.85rem; }
-  .btn-clear { font-family: 'IBM Plex Sans', sans-serif; font-size: 12px; font-weight: 500; padding: 0.4rem 0.9rem; border-radius: 5px; cursor: pointer; background: white; border: 1px solid var(--gray-border); color: var(--gray-text); }
-  .btn-clear:hover { background: var(--gray-bg); }
+  .table-btn-row { margin-top: 0.85rem; display: flex; gap: 0.75rem; }
+  .btn-clear, .btn-export { font-family: 'IBM Plex Sans', sans-serif; font-size: 12px; font-weight: 500; padding: 0.4rem 0.9rem; border-radius: 5px; cursor: pointer; background: white; border: 1px solid var(--gray-border); color: var(--gray-text); }
+  .btn-clear:hover, .btn-export:hover { background: var(--gray-bg); }
+  .btn-export { background: var(--blue-light); border-color: var(--blue-border); color: var(--blue-dark); }
+  .btn-export:hover { background: #d4e8fb; }
   .empty-row td { color: #ccc; font-style: italic; font-family: 'IBM Plex Sans', sans-serif; font-size: 12px; }
 </style>
 </head>
@@ -213,6 +215,7 @@
     </table>
     <div class="table-btn-row">
       <button class="btn-clear" onclick="clearTable()">Tabelle leeren</button>
+      <button class="btn-export" id="btn-export">Exportieren als CSV</button>
     </div>
   </div>
 
@@ -526,6 +529,37 @@
       '<tr class="empty-row"><td colspan="7">Noch keine Messungen – führe das Experiment durch und klicke „Messung speichern"</td></tr>';
     measureCount = 0;
   }
+
+  function exportTableToCSV() {
+    const rows = Array.from(document.querySelectorAll('#table-body tr'))
+      .filter(row => !row.classList.contains('empty-row'));
+    if (rows.length === 0) {
+      alert('Keine Messwerte vorhanden, die exportiert werden können.');
+      return;
+    }
+
+    const headers = ['#', 'm1 [g]', 'v1 [m/s]', 'm1 · v1 [g·m/s]', 'm2 [g]', 'v2 [m/s]', 'm2 · v2 [g·m/s]'];
+    const csvLines = [headers.join(',')];
+
+    rows.forEach(row => {
+      const values = Array.from(row.querySelectorAll('td')).map(td =>
+        td.textContent.trim().replace('← ', '').replace(' →', '')
+      );
+      csvLines.push(values.map(value => '"' + value.replace(/"/g, '""') + '"').join(','));
+    });
+
+    const blob = new Blob([csvLines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'luftkissenbahn_messungen.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  document.getElementById('btn-export').addEventListener('click', exportTableToCSV);
 
   window.addEventListener('resize', () => { if (state === 'idle') initGliders(); });
   initGliders();
