@@ -232,7 +232,7 @@
             <input type="checkbox" id="chk-thrust" checked> Realistisches Massendurchsatz-Modell aktiv
           </label>
           <label class="toggle-label">
-            <input type="checkbox" id="chk-gravity"> Erdanziehung (g = 9,81 m/s²)
+            <input type="checkbox" id="chk-gravity"> Erdanziehung (1/r²-Gravitationsgesetz)
           </label>
           <label class="toggle-label">
             <input type="checkbox" id="chk-tsiol" checked> Tsiolkowski-Modus (kontinuierlich)
@@ -350,7 +350,9 @@
       </div>
       <div class="info-box">
         <div class="ib-title">Erdanziehung (optional)</div>
-        <p>Mit zugeschalteter Gravitation wirkt g = 9,81 m/s² bremsend auf die Rakete. Die Endgeschwindigkeit sinkt deutlich – besonders bei langsam brennenden Stufen.</p>
+        <p>Mit zugeschalteter Gravitation wirkt das 1/r²-Gravitationsgesetz. Die Fallbeschleunigung nimmt mit der Höhe h ab:</p>
+        <div class="formula">g(h) = G·M_E / (R_E + h)²</div>
+        <p style="margin-top:0.4rem;">An der Oberfläche: g(0) ≈ 9,81 m/s². Bei 400 km Höhe (ISS): g ≈ 8,69 m/s².</p>
       </div>
     </div>
   </div>
@@ -358,6 +360,10 @@
 </div><!-- page -->
 
 <script>
+// ── Physical constants ─────────────────────────────────────────────────────
+const R_EARTH = 6_371_000;          // m  — mean Earth radius
+const MU_EARTH = 3.986004418e14;    // m³/s²  — G * M_Earth
+
 // ── State ──────────────────────────────────────────────────────────────────
 let variant = 62; // 62 or 64
 let simState = 'idle'; // idle | running | done
@@ -587,7 +593,8 @@ function tick(ts) {
   const dt = wallDt * SIM_SPEED;
 
   const p = getParams();
-  const g = p.gravity ? 9.81 : 0;
+  // Inverse-square gravitational acceleration at current altitude
+  const g = p.gravity ? MU_EARTH / Math.pow(R_EARTH + simH, 2) : 0;
 
   if (simPhase === 1) {
     // Phase 1: Booster + Kernstufe brennen
