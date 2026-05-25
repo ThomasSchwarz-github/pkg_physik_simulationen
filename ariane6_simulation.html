@@ -543,12 +543,13 @@ updateThrustDisplays();
 // ── Phase badge helpers ───────────────────────────────────────────────────
 function setPhase(ph) {
   simPhase = ph;
-  const cls = ['','active-amber','active-amber','active-blue','active-teal','done'];
+  const cls = ['','active-amber','active-amber','active-blue','active-teal'];
   const doneClass = 'done';
   for (let i=0; i<=4; i++) {
     const el = document.getElementById('ph-'+i);
+    if (!el) continue;
     el.className = 'phase-badge';
-    if (i === ph) el.classList.add(cls[ph] || '');
+    if (i === ph && cls[ph]) el.classList.add(cls[ph]);
     if (i < ph && ph > 0) el.classList.add(doneClass);
   }
 }
@@ -604,7 +605,7 @@ function tick(ts) {
     }
 
     const burned = Math.min(burnRate * dt, simM - p.mAfterP1Burn);
-    if (burned <= 0 || simM <= p.mAfterP1Burn + 1) {
+    if (simM <= p.mAfterP1Burn + 1) {
       // Phase 1 done (mass already at or below after-P1)
       simM = p.mAfterP1Burn;
       if (document.getElementById('burnfill-p1')) document.getElementById('burnfill-p1').style.width = '0%';
@@ -619,6 +620,13 @@ function tick(ts) {
       });
       pushHistory();
       drawAll();
+      return;
+    }
+    if (burned <= 0) {
+      pushHistory();
+      drawAll();
+      updateReadouts();
+      animFrame = requestAnimationFrame(tick);
       return;
     }
 
@@ -658,7 +666,7 @@ function tick(ts) {
     }
 
     const burned2 = Math.min(burnRate2 * dt, simM - minMass);
-    if (burned2 <= 0 || simM <= minMass + 1) {
+    if (simM <= minMass + 1) {
       simM = minMass;
       if (document.getElementById('burnfill-p2')) document.getElementById('burnfill-p2').style.width = '0%';
       if (document.getElementById('burntime-p2')) document.getElementById('burntime-p2').textContent = '0 s';
@@ -668,6 +676,13 @@ function tick(ts) {
       document.getElementById('btn-start').disabled = false;
       pushHistory();
       drawAll();
+      return;
+    }
+    if (burned2 <= 0) {
+      pushHistory();
+      drawAll();
+      updateReadouts();
+      animFrame = requestAnimationFrame(tick);
       return;
     }
 
