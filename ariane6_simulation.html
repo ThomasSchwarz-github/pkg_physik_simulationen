@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ariane 6 – Raketenstart-Simulation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue-dark: #0C447C;
+    --blue-mid: #185FA5;
+    --blue-light: #E6F1FB;
+    --blue-border: #B5D4F4;
+    --teal-dark: #0F6E56;
+    --teal-mid: #1D9E75;
+    --teal-light: #E1F5EE;
+    --teal-border: #9FE1CB;
+    --amber-dark: #854F0B;
+    --amber-mid: #BA7517;
+    --amber-light: #FAEEDA;
+    --amber-border: #FAC775;
+    --red-dark: #7C1C0C;
+    --red-mid: #C0392B;
+    --red-light: #FDECEA;
+    --red-border: #F4A89A;
+    --gray-bg: #F8F7F4;
+    --gray-border: #D3D1C7;
+    --gray-text: #5F5E5A;
+    --text-main: #1a1917;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'IBM Plex Sans', sans-serif; background: #f5f3ef; color: var(--text-main); min-height: 100vh; }
+  .page { width: min(1100px, 100%); max-width: 1100px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+
+  .header { border-bottom: 2px solid var(--text-main); padding-bottom: 1.2rem; margin-bottom: 2rem; }
+  .header .kurs { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gray-text); font-weight: 500; margin-bottom: 0.4rem; }
+  .header h1 { font-family: 'Source Serif 4', serif; font-size: 2rem; font-weight: 600; line-height: 1.2; }
+  .header .meta { margin-top: 0.5rem; font-size: 13px; color: var(--gray-text); }
+
+  .intro-box { background: var(--blue-light); border-left: 3px solid var(--blue-mid); padding: 1rem 1.25rem; margin-bottom: 2rem; border-radius: 0 6px 6px 0; }
+  .intro-box p { font-size: 14.5px; line-height: 1.7; color: var(--blue-dark); }
+
+  .sim-card { background: white; border: 1px solid var(--gray-border); border-radius: 10px; padding: 1.5rem; margin-bottom: 2rem; }
+  .sim-card h2 { font-family: 'Source Serif 4', serif; font-size: 1.15rem; font-weight: 600; margin-bottom: 1.25rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--gray-border); }
+
+    /* Controls */
+    /* Use two columns so booster + kernstufe sit side-by-side,
+      Oberstufe and full-width boxes occupy their own row. */
+    .controls-outer { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem; align-items: start; padding: 0 0.25rem; }
+    .control-box { overflow: hidden; }
+  .control-box { background: var(--gray-bg); border: 1px solid var(--gray-border); border-radius: 8px; padding: 0.85rem 1rem; }
+  .control-box.booster { border-top: 3px solid var(--amber-mid); }
+  .control-box.kernstufe { border-top: 3px solid var(--blue-mid); }
+  .control-box.oberstufe { border-top: 3px solid var(--teal-mid); grid-column: 1 / -1; }
+  .control-box.nutzlast { border-top: 3px solid var(--red-mid); grid-column: 1 / -1; }
+  .control-box.options { border-top: 3px solid #888; grid-column: 1 / -1; }
+  .control-label { font-size: 12px; font-weight: 600; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+  .control-box.booster .control-label { color: var(--amber-dark); }
+  .control-box.kernstufe .control-label { color: var(--blue-dark); }
+  .control-box.oberstufe .control-label { color: var(--teal-dark); }
+  .control-box.nutzlast .control-label { color: var(--red-dark); }
+  .control-box.options .control-label { color: #444; }
+
+  .slider-row { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.45rem; }
+  .slider-row:last-child { margin-bottom: 0; }
+  .slider-row label { font-size: 12.5px; color: var(--gray-text); width: 120px; flex-shrink: 0; }
+  .slider-row input[type=range] { flex: 1; height: 4px; }
+  .control-box.booster .slider-row input[type=range] { accent-color: var(--amber-mid); }
+  .control-box.kernstufe .slider-row input[type=range] { accent-color: var(--blue-mid); }
+  .control-box.oberstufe .slider-row input[type=range] { accent-color: var(--teal-mid); }
+  .control-box.nutzlast .slider-row input[type=range] { accent-color: var(--red-mid); }
+  .slider-row .val { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; font-weight: 500; min-width: 72px; text-align: right; }
+
+  /* Options row */
+  .options-row { display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: center; }
+  .toggle-label { display: flex; align-items: center; gap: 0.5rem; font-size: 13px; cursor: pointer; user-select: none; }
+  .toggle-label input[type=checkbox] { width: 15px; height: 15px; accent-color: var(--blue-mid); cursor: pointer; }
+  .variant-label { font-size: 13px; font-weight: 500; color: var(--gray-text); }
+  .variant-select { display: flex; gap: 0.4rem; }
+  .var-btn { font-family: 'IBM Plex Sans', sans-serif; font-size: 12px; font-weight: 600; padding: 0.3rem 0.8rem; border-radius: 5px; border: 1px solid var(--gray-border); cursor: pointer; background: white; color: var(--gray-text); transition: all 0.15s; }
+  .var-btn.active { background: var(--text-main); color: white; border-color: var(--text-main); }
+
+  /* Main layout: canvas + live data */
+  .sim-main { display: grid; grid-template-columns: 220px 1fr; gap: 1rem; margin-bottom: 1.25rem; }
+  @media (max-width: 700px) { .sim-main { grid-template-columns: 1fr; } .controls-outer { grid-template-columns: 1fr; } }
+
+  /* Rocket canvas */
+  .rocket-wrap { background: #0a0f1e; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; align-items: center; min-height: 340px; position: relative; }
+  .rocket-canvas { display: block; width: 100%; }
+  .altitude-label { position: absolute; top: 8px; left: 0; right: 0; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: rgba(255,255,255,0.5); letter-spacing: 0.05em; }
+
+  /* Charts */
+  .charts-col { display: flex; flex-direction: column; gap: 0.75rem; }
+  .chart-box { background: var(--gray-bg); border: 1px solid var(--gray-border); border-radius: 8px; padding: 0.75rem; flex: 1; }
+  .chart-title { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gray-text); margin-bottom: 0.4rem; }
+  canvas.chart { display: block; width: 100%; height: 90px; }
+
+  /* Buttons */
+  .btn-row { display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; }
+  button { font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 0.5rem 1.1rem; border-radius: 6px; cursor: pointer; transition: all 0.15s; border: 1px solid var(--gray-border); }
+  .btn-start { background: var(--text-main); color: white; border-color: var(--text-main); }
+  .btn-start:hover { background: #333; }
+  .btn-start:disabled { background: #aaa; border-color: #aaa; cursor: not-allowed; }
+  .btn-reset { background: white; color: var(--text-main); }
+  .btn-reset:hover { background: var(--gray-bg); }
+  .status-msg { font-size: 12.5px; color: var(--gray-text); font-style: italic; padding: 0.4rem 0; margin-left: auto; }
+
+  /* Live readouts */
+  .readout-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6rem; margin-bottom: 0.75rem; }
+  @media (max-width: 700px) { .readout-strip { grid-template-columns: repeat(2, 1fr); } }
+  .readout-cell { background: var(--gray-bg); border: 1px solid var(--gray-border); border-radius: 6px; padding: 0.55rem 0.75rem; text-align: center; }
+  .readout-cell .rc-label { font-size: 11px; color: var(--gray-text); margin-bottom: 0.2rem; }
+  .readout-cell .rc-value { font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 500; }
+  .readout-cell.blue-cell { background: var(--blue-light); border-color: var(--blue-border); }
+  .readout-cell.blue-cell .rc-value { color: var(--blue-dark); }
+  .readout-cell.teal-cell { background: var(--teal-light); border-color: var(--teal-border); }
+  .readout-cell.teal-cell .rc-value { color: var(--teal-dark); }
+  .readout-cell.amber-cell { background: var(--amber-light); border-color: var(--amber-border); }
+  .readout-cell.amber-cell .rc-value { color: var(--amber-dark); }
+
+  /* Phase badges */
+  .phase-strip { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  .phase-badge { font-size: 11px; font-weight: 600; padding: 0.25rem 0.65rem; border-radius: 20px; border: 1px solid var(--gray-border); background: white; color: var(--gray-text); letter-spacing: 0.03em; transition: all 0.3s; }
+  .phase-badge.active-amber { background: var(--amber-light); border-color: var(--amber-border); color: var(--amber-dark); }
+  .phase-badge.active-blue { background: var(--blue-light); border-color: var(--blue-border); color: var(--blue-dark); }
+  .phase-badge.active-teal { background: var(--teal-light); border-color: var(--teal-border); color: var(--teal-dark); }
+  .phase-badge.done { background: #e8f5e9; border-color: #a5d6a7; color: #2e7d32; }
+
+  /* Info card */
+  .info-card { background: white; border: 1px solid var(--gray-border); border-radius: 10px; padding: 1.5rem; margin-bottom: 2rem; }
+  .info-card h2 { font-family: 'Source Serif 4', serif; font-size: 1.15rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--gray-border); }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 600px) { .info-grid { grid-template-columns: 1fr; } }
+  .info-box { background: var(--gray-bg); border: 1px solid var(--gray-border); border-radius: 6px; padding: 0.8rem 1rem; }
+  .info-box .ib-title { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gray-text); margin-bottom: 0.5rem; }
+  .info-box p { font-size: 13px; line-height: 1.65; }
+  .formula { font-family: 'IBM Plex Mono', monospace; font-size: 13px; background: white; border: 1px solid var(--gray-border); border-radius: 4px; padding: 0.4rem 0.75rem; display: inline-block; margin-top: 0.35rem; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="kurs">Physik · Jahrgangsstufe EF · Impuls &amp; Rückstoß</div>
+    <h1>Ariane 6 – Raketenstart-Simulation</h1>
+    <div class="meta">Interaktive Simulation · Mehrstufenrakete mit Boostern</div>
+  </div>
+
+  <div class="intro-box">
+    <p>Die Ariane 6 nutzt das <strong>Rückstoßprinzip</strong>: Ausgestoßenes Gas erhält einen Impuls nach hinten – die Rakete wird nach vorne beschleunigt. In dieser Simulation kannst du Treibstoffmassen, Nutzlast und Variante (A62/A64) einstellen und beobachten, wie sich Höhe, Geschwindigkeit und Masse über die Zeit entwickeln. Optional kann die Erdanziehung zugeschaltet werden.</p>
+  </div>
+
+  <div class="sim-card">
+    <h2>Parameter &amp; Konfiguration</h2>
+
+    <div class="controls-outer">
+
+      <div class="control-box booster">
+        <div class="control-label">Booster P120C (je Stück)</div>
+        <div class="slider-row">
+          <label>Treibstoff</label>
+          <input type="range" id="sl-b-fuel" min="50000" max="200000" step="5000" value="142000">
+          <span class="val" id="v-b-fuel">142 000 kg</span>
+        </div>
+        <div class="slider-row">
+          <label>Leermasse</label>
+          <input type="range" id="sl-b-dry" min="5000" max="30000" step="1000" value="13000">
+          <span class="val" id="v-b-dry">13 000 kg</span>
+        </div>
+      </div>
+
+      <div class="control-box kernstufe">
+        <div class="control-label">Kernstufe (Stufe 1)</div>
+        <div class="slider-row">
+          <label>Treibstoff</label>
+          <input type="range" id="sl-k-fuel" min="50000" max="250000" step="5000" value="140000">
+          <span class="val" id="v-k-fuel">140 000 kg</span>
+        </div>
+        <div class="slider-row">
+          <label>Leermasse</label>
+          <input type="range" id="sl-k-dry" min="5000" max="40000" step="1000" value="14000">
+          <span class="val" id="v-k-dry">14 000 kg</span>
+        </div>
+      </div>
+
+      <div class="control-box oberstufe">
+        <div class="control-label">Oberstufe (Stufe 2)</div>
+        <div class="slider-row">
+          <label>Treibstoff</label>
+          <input type="range" id="sl-o-fuel" min="5000" max="80000" step="1000" value="32000">
+          <span class="val" id="v-o-fuel">32 000 kg</span>
+        </div>
+        <div class="slider-row">
+          <label>Leermasse</label>
+          <input type="range" id="sl-o-dry" min="1000" max="15000" step="500" value="6000">
+          <span class="val" id="v-o-dry">6 000 kg</span>
+        </div>
+      </div>
+
+      <div class="control-box nutzlast">
+        <div class="control-label">Nutzlast &amp; Antrieb</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem;">
+          <div class="slider-row" style="grid-column: 1 / -1; margin-bottom:0;">
+            <label>Nutzlast</label>
+            <input type="range" id="sl-payload" min="1000" max="25000" step="500" value="15000">
+            <span class="val" id="v-payload">15 000 kg</span>
+          </div>
+          <div class="slider-row" style="margin-bottom:0;">
+            <label>v_Gas</label>
+            <input type="range" id="sl-vgas" min="1000" max="6000" step="100" value="4000">
+            <span class="val" id="v-vgas">4 000 m/s</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="control-box options">
+        <div class="control-label">Optionen</div>
+        <div class="options-row">
+          <span class="variant-label">Variante:</span>
+          <div class="variant-select">
+            <button class="var-btn active" id="btn-a62" onclick="setVariant(62)">A62 (2 Booster)</button>
+            <button class="var-btn" id="btn-a64" onclick="setVariant(64)">A64 (4 Booster)</button>
+          </div>
+                  <label class="toggle-label">
+                    <input type="checkbox" id="chk-thrust"> Leistungskonstante Verbrennung (Thrust-Modell)
+                  </label>
+          <label class="toggle-label">
+            <input type="checkbox" id="chk-gravity"> Erdanziehung (g = 9,81 m/s²)
+          </label>
+          <label class="toggle-label">
+            <input type="checkbox" id="chk-tsiol" checked> Tsiolkowski-Modus (kontinuierlich)
+          </label>
+          <!-- Mass-flow sliders for adjustable mass flow (±50% of reference) -->
+          <div style="width:100%; margin-top:8px; display:grid; grid-template-columns: 1fr 1fr; gap:0.6rem; align-items:start;">
+            <div style="font-size:12px;">
+              <label style="display:block; font-size:12px; margin-bottom:6px;">Booster Massendurchsatz (kg/s, pro Booster)</label>
+              <input id="sl-mf-booster" type="range" min="450" max="1350" step="10" value="900">
+              <div style="text-align:right; font-family: 'IBM Plex Mono'; font-size:12px;" id="v-mf-booster">900 kg/s</div>
+            </div>
+            <div style="font-size:12px;">
+              <label style="display:block; font-size:12px; margin-bottom:6px;">Kernstufe Massendurchsatz (kg/s)</label>
+              <input id="sl-mf-core" type="range" min="250" max="750" step="10" value="500">
+              <div style="text-align:right; font-family: 'IBM Plex Mono'; font-size:12px;" id="v-mf-core">500 kg/s</div>
+            </div>
+            <div style="font-size:12px;">
+              <label style="display:block; font-size:12px; margin-bottom:6px;">Oberstufe Massendurchsatz (kg/s)</label>
+              <input id="sl-mf-upper" type="range" min="140" max="420" step="5" value="275">
+              <div style="text-align:right; font-family: 'IBM Plex Mono'; font-size:12px;" id="v-mf-upper">275 kg/s</div>
+            </div>
+            <div style="font-size:12px;">
+              <div style="font-size:12px; margin-bottom:6px;">Berechnete Werte</div>
+              <div style="display:flex; justify-content:space-between; font-size:12px;">
+                <div>Massendurchsatz P1:</div><div id="massflow-p1" style="font-family: 'IBM Plex Mono';">— kg/s</div>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:12px;">
+                <div>Burn time P1:</div><div id="burntime-p1" style="font-family: 'IBM Plex Mono';">— s</div>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:12px; margin-top:6px;">
+                <div>Massendurchsatz P2:</div><div id="massflow-p2" style="font-family: 'IBM Plex Mono';">— kg/s</div>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:12px;">
+                <div>Burn time P2:</div><div id="burntime-p2" style="font-family: 'IBM Plex Mono';">— s</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- controls-outer -->
+
+    <!-- Phase indicators -->
+    <div class="phase-strip">
+      <span class="phase-badge" id="ph-0">🚀 Bereit</span>
+      <span class="phase-badge" id="ph-1">Phase 1: Booster + Kernstufe</span>
+      <span class="phase-badge" id="ph-2">Stufentrennung</span>
+      <span class="phase-badge" id="ph-3">Phase 2: Oberstufe</span>
+      <span class="phase-badge" id="ph-4">Nutzlast im Orbit</span>
+    </div>
+
+    <!-- Live readouts -->
+    <div class="readout-strip">
+      <div class="readout-cell blue-cell">
+        <div class="rc-label">Höhe</div>
+        <div class="rc-value" id="rd-alt">0 km</div>
+      </div>
+      <div class="readout-cell teal-cell">
+        <div class="rc-label">Geschwindigkeit</div>
+        <div class="rc-value" id="rd-vel">0 m/s</div>
+      </div>
+      <div class="readout-cell amber-cell">
+        <div class="rc-label">Gesamtmasse</div>
+        <div class="rc-value" id="rd-mass">— t</div>
+      </div>
+      <div class="readout-cell">
+        <div class="rc-label">Zeit</div>
+        <div class="rc-value" id="rd-time">0 s</div>
+      </div>
+    </div>
+
+    <!-- Sim main: rocket + charts -->
+    <div class="sim-main">
+      <div class="rocket-wrap">
+        <div class="altitude-label" id="alt-label">Höhe: 0 km</div>
+        <canvas class="rocket-canvas" id="cvs-rocket" width="220" height="340"></canvas>
+      </div>
+      <div class="charts-col">
+        <div class="chart-box">
+          <div class="chart-title" style="color: var(--blue-dark);">Höhe [km]</div>
+          <canvas class="chart" id="cvs-alt" width="600" height="90"></canvas>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title" style="color: var(--teal-dark);">Geschwindigkeit [m/s]</div>
+          <canvas class="chart" id="cvs-vel" width="600" height="90"></canvas>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title" style="color: var(--amber-dark);">Gesamtmasse [t]</div>
+          <canvas class="chart" id="cvs-mass" width="600" height="90"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-start" id="btn-start">▶ Start</button>
+      <button class="btn-reset" id="btn-reset">↺ Zurücksetzen</button>
+      <span class="status-msg" id="status-msg"></span>
+    </div>
+
+  </div><!-- sim-card -->
+
+  <!-- Physics info -->
+  <div class="info-card">
+    <h2>Physikalischer Hintergrund</h2>
+    <div class="info-grid">
+      <div class="info-box">
+        <div class="ib-title">Impulserhaltung (vereinfachtes Modell)</div>
+        <p>Bei schlagartigem Treibstoffausstoß gilt: Der Gesamtimpuls bleibt erhalten. Das Gas erhält Impuls nach hinten, die Rakete entsprechend nach vorne.</p>
+        <div class="formula">m₁·v₁ + m_Gas·(−v_Gas) = 0</div>
+      </div>
+      <div class="info-box">
+        <div class="ib-title">Tsiolkowski-Raketengleichung</div>
+        <p>Bei kontinuierlichem Ausstoß (realistischer) gilt die Raketengleichung. Der Geschwindigkeitszuwachs hängt vom Massenquotienten ab:</p>
+        <div class="formula">Δv = v_Gas · ln(m₀ / m₁)</div>
+      </div>
+      <div class="info-box">
+        <div class="ib-title">Stufentrennung</div>
+        <p>Nach dem Abbrand einer Stufe wird die leere Hülle abgetrennt. Dadurch sinkt die zu beschleunigende Masse – die zweite Stufe arbeitet effizienter.</p>
+      </div>
+      <div class="info-box">
+        <div class="ib-title">Erdanziehung (optional)</div>
+        <p>Mit zugeschalteter Gravitation wirkt g = 9,81 m/s² bremsend auf die Rakete. Die Endgeschwindigkeit sinkt deutlich – besonders bei langsam brennenden Stufen.</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- page -->
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+let variant = 62; // 62 or 64
+let simState = 'idle'; // idle | running | done
+let animFrame = null;
+let lastTs = null;
+
+// Simulation variables
+let simT = 0;
+let simH = 0;   // height m
+let simV = 0;   // velocity m/s
+let simM = 0;   // current mass kg
+let simPhase = 0; // 0=idle,1=booster+kern,2=sep,3=oberstufe,4=done
+
+// History for charts
+let histT = [], histH = [], histV = [], histM = [];
+
+// Phase start masses
+let m_start_p1 = 0;
+let m_end_p1 = 0;   // mass after phase 1 separation (dry booster+kern dropped)
+let m_start_p2 = 0;
+let m_end_p2 = 0;
+
+// Phase durations (simulated time per phase in seconds)
+const PHASE1_DUR = 130;   // booster burn ~130s
+const SEP_DUR    = 2;
+const PHASE2_DUR = 200;   // upper stage burn
+
+// ── Parameter helpers ──────────────────────────────────────────────────────
+function getParams() {
+  const nBoost = variant === 64 ? 4 : 2;
+  const bFuel  = +document.getElementById('sl-b-fuel').value;
+  const bDry   = +document.getElementById('sl-b-dry').value;
+  const kFuel  = +document.getElementById('sl-k-fuel').value;
+  const kDry   = +document.getElementById('sl-k-dry').value;
+  const oFuel  = +document.getElementById('sl-o-fuel').value;
+  const oDry   = +document.getElementById('sl-o-dry').value;
+  const mPL    = +document.getElementById('sl-payload').value;
+  const vGas   = +document.getElementById('sl-vgas').value;
+  const gravity = document.getElementById('chk-gravity').checked;
+  const tsiol   = document.getElementById('chk-tsiol').checked;
+  const thrustModel = document.getElementById('chk-thrust') && document.getElementById('chk-thrust').checked;
+  const massFlowBoost = document.getElementById('sl-mf-booster') ? +document.getElementById('sl-mf-booster').value : 900;
+  const massFlowCore  = document.getElementById('sl-mf-core') ? +document.getElementById('sl-mf-core').value : 500;
+  const massFlowUpper = document.getElementById('sl-mf-upper') ? +document.getElementById('sl-mf-upper').value : 275;
+
+  const boosterTotalFuel = nBoost * bFuel;
+  const boosterTotalDry  = nBoost * bDry;
+  const m0 = boosterTotalFuel + boosterTotalDry + kFuel + kDry + oFuel + oDry + mPL;
+
+  // After phase 1: drop booster dry masses + kern dry mass
+  const mDropP1 = boosterTotalDry + kDry;
+  const mAfterP1Burn = m0 - boosterTotalFuel - kFuel; // still includes dropped structures
+  const mAfterSep    = mAfterP1Burn - mDropP1;        // = oFuel + oDry + mPL
+
+  return { nBoost, bFuel, bDry, kFuel, kDry, oFuel, oDry, mPL, vGas, gravity, tsiol, thrustModel,
+           boosterTotalFuel, boosterTotalDry, m0, mDropP1, mAfterP1Burn, mAfterSep,
+           massFlowBoost, massFlowCore, massFlowUpper };
+}
+
+// ── Velocity calculations ─────────────────────────────────────────────────
+function calcDeltaV(m0, mf, vGas, tsiol) {
+  if (tsiol) {
+    if (mf <= 0 || m0 <= 0) return 0;
+    return vGas * Math.log(m0 / mf);
+  } else {
+    // Impuls model: schlagartiger Ausstoß
+    const mGas = m0 - mf;
+    if (mf <= 0) return 0;
+    return (mGas * vGas) / mf;
+  }
+}
+
+// ── Format helpers ─────────────────────────────────────────────────────────
+function fmtDE(x, dec) {
+  return x.toLocaleString('de-DE', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+}
+function fmtKg(x) {
+  if (x >= 1e6) return fmtDE(x/1e6, 2) + ' Mt';
+  if (x >= 1e3) return fmtDE(x/1e3, 0) + ' t';
+  return fmtDE(x, 0) + ' kg';
+}
+function fmtMass(x) { return fmtDE(x/1000, 1) + ' t'; }
+
+// ── Update slider display ─────────────────────────────────────────────────
+function fmtSl(x) {
+  if (x >= 1000) return x.toLocaleString('de-DE') + ' kg';
+  return x + ' m/s';
+}
+
+const sliders = [
+  ['sl-b-fuel','v-b-fuel'], ['sl-b-dry','v-b-dry'],
+  ['sl-k-fuel','v-k-fuel'], ['sl-k-dry','v-k-dry'],
+  ['sl-o-fuel','v-o-fuel'], ['sl-o-dry','v-o-dry'],
+  ['sl-payload','v-payload'], ['sl-vgas','v-vgas']
+];
+sliders.forEach(([sid, vid]) => {
+  const sl = document.getElementById(sid);
+  const vl = document.getElementById(vid);
+  function upd() {
+    const v = +sl.value;
+    if (sid === 'sl-vgas') vl.textContent = v.toLocaleString('de-DE') + ' m/s';
+    else vl.textContent = v.toLocaleString('de-DE') + ' kg';
+  }
+  upd();
+  sl.addEventListener('input', upd);
+});
+
+// ── Variant selection ──────────────────────────────────────────────────────
+function setVariant(v) {
+  variant = v;
+  document.getElementById('btn-a62').className = 'var-btn' + (v===62?' active':'');
+  document.getElementById('btn-a64').className = 'var-btn' + (v===64?' active':'');
+  updateStartMassDisplay();
+}
+
+function updateStartMassDisplay() {
+  const p = getParams();
+  document.getElementById('rd-mass').textContent = fmtDE(p.m0/1000, 0) + ' t';
+}
+updateStartMassDisplay();
+sliders.forEach(([sid]) => document.getElementById(sid).addEventListener('input', updateStartMassDisplay));
+document.getElementById('chk-gravity').addEventListener('change', updateStartMassDisplay);
+
+// ── Mass-flow UI updates ─────────────────────────────────────────────────
+function updateThrustDisplays() {
+  const mfB = document.getElementById('sl-mf-booster') ? +document.getElementById('sl-mf-booster').value : 900;
+  const mfC = document.getElementById('sl-mf-core') ? +document.getElementById('sl-mf-core').value : 500;
+  const mfU = document.getElementById('sl-mf-upper') ? +document.getElementById('sl-mf-upper').value : 275;
+  const nBoost = variant === 64 ? 4 : 2;
+  const totalFuelP1 = (nBoost * (+document.getElementById('sl-b-fuel').value)) + (+document.getElementById('sl-k-fuel').value);
+  const totalFuelP2 = (+document.getElementById('sl-o-fuel').value);
+
+  // Update small value displays
+  if (document.getElementById('v-mf-booster')) document.getElementById('v-mf-booster').textContent = mfB.toLocaleString('de-DE') + ' kg/s';
+  if (document.getElementById('v-mf-core')) document.getElementById('v-mf-core').textContent = mfC.toLocaleString('de-DE') + ' kg/s';
+  if (document.getElementById('v-mf-upper')) document.getElementById('v-mf-upper').textContent = mfU.toLocaleString('de-DE') + ' kg/s';
+
+  const massflowP1 = nBoost * mfB + mfC;
+  const burntimeP1 = massflowP1 > 0 ? Math.round(totalFuelP1 / massflowP1) : '—';
+  const massflowP2 = mfU;
+  const burntimeP2 = massflowP2 > 0 ? Math.round(totalFuelP2 / massflowP2) : '—';
+
+  if (document.getElementById('massflow-p1')) document.getElementById('massflow-p1').textContent = massflowP1.toLocaleString('de-DE') + ' kg/s';
+  if (document.getElementById('burntime-p1')) document.getElementById('burntime-p1').textContent = (burntimeP1 === '—' ? '—' : burntimeP1 + ' s');
+  if (document.getElementById('massflow-p2')) document.getElementById('massflow-p2').textContent = massflowP2.toLocaleString('de-DE') + ' kg/s';
+  if (document.getElementById('burntime-p2')) document.getElementById('burntime-p2').textContent = (burntimeP2 === '—' ? '—' : burntimeP2 + ' s');
+}
+
+// Attach listeners for new mass-flow sliders
+['sl-mf-booster','sl-mf-core','sl-mf-upper'].forEach(id => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('input', () => { updateThrustDisplays(); updateStartMassDisplay(); });
+});
+
+// Initialize displays
+updateThrustDisplays();
+
+// ── Phase badge helpers ───────────────────────────────────────────────────
+function setPhase(ph) {
+  simPhase = ph;
+  const cls = ['','active-amber','active-amber','active-blue','active-teal','done'];
+  const doneClass = 'done';
+  for (let i=0; i<=4; i++) {
+    const el = document.getElementById('ph-'+i);
+    el.className = 'phase-badge';
+    if (i === ph) el.classList.add(cls[ph] || '');
+    if (i < ph && ph > 0) el.classList.add(doneClass);
+  }
+}
+
+// ── Simulation ────────────────────────────────────────────────────────────
+function startSim() {
+  if (simState === 'running') return;
+  const p = getParams();
+
+  simT = 0; simH = 0; simV = 0; simM = p.m0;
+  histT = [0]; histH = [0]; histV = [0]; histM = [p.m0/1000];
+  lastTs = null;
+  simState = 'running';
+
+  document.getElementById('btn-start').disabled = true;
+  document.getElementById('status-msg').textContent = 'Zündung …';
+
+  // Pre-calculate phase velocities for display
+  m_start_p1 = p.m0;
+  m_end_p1   = p.mAfterSep;
+  m_start_p2 = p.mAfterSep;
+  m_end_p2   = p.oDry + p.mPL;
+
+  setPhase(1);
+  animFrame = requestAnimationFrame(tick);
+}
+
+function tick(ts) {
+  if (!lastTs) lastTs = ts;
+  const wallDt = (ts - lastTs) / 1000;
+  lastTs = ts;
+
+  // Sim runs 20× faster than wall time
+  const SIM_SPEED = 20;
+  const dt = wallDt * SIM_SPEED;
+
+  const p = getParams();
+  const g = p.gravity ? 9.81 : 0;
+
+  if (simPhase === 1) {
+    // Phase 1: Booster + Kernstufe brennen
+    const totalFuelP1   = p.boosterTotalFuel + p.kFuel;
+    let burnRate;
+    let totalBurnTime;
+    if (p.thrustModel) {
+      // Use user-adjustable mass-flow sliders for each stage (kg/s)
+      const massFlow = (p.nBoost * p.massFlowBoost) + p.massFlowCore; // total kg/s for phase1
+      burnRate = massFlow;
+      totalBurnTime = totalFuelP1 / burnRate;
+    } else {
+      totalBurnTime = PHASE1_DUR;
+      burnRate = totalFuelP1 / totalBurnTime; // kg/s
+    }
+
+    const burned = Math.min(burnRate * dt, simM - p.mAfterP1Burn);
+    if (burned <= 0 || simM <= p.mAfterP1Burn + 1) {
+      // Phase 1 done (mass already at or below after-P1)
+      simM = p.mAfterP1Burn;
+      setPhase(2);
+      document.getElementById('status-msg').textContent = 'Stufentrennung …';
+      scheduleNext(SEP_DUR * 1000 / SIM_SPEED, () => {
+        simM -= p.mDropP1;
+        setPhase(3);
+        document.getElementById('status-msg').textContent = 'Oberstufe zündet …';
+        animFrame = requestAnimationFrame(tick);
+      });
+      pushHistory();
+      drawAll();
+      return;
+    }
+
+    simM -= burned;
+    // Thrust acceleration: F = mass_flow * vGas, a = F/m
+    const thrust_a = (burnRate * p.vGas) / simM;
+    simV += (thrust_a - g) * dt;
+    simT += dt;
+    simH += simV * dt;
+    if (simH < 0) { simH = 0; simV = 0; }
+    // Update live remaining burn time display for P1
+    if (document.getElementById('burntime-p1')) {
+      const remainingFuelP1 = Math.max(simM - p.mAfterP1Burn, 0);
+      const remTime = burnRate > 0 ? Math.round(remainingFuelP1 / burnRate) : 0;
+      document.getElementById('burntime-p1').textContent = remTime + ' s';
+      if (document.getElementById('massflow-p1')) document.getElementById('massflow-p1').textContent = (burnRate).toLocaleString('de-DE') + ' kg/s';
+    }
+
+  } else if (simPhase === 3) {
+    // Phase 2: Oberstufe
+    // Phase 2: Oberstufe
+    let burnRate2;
+    let totalBurnTime2;
+    const minMass = p.oDry + p.mPL;
+    if (p.thrustModel) {
+      const massFlowUpper = p.massFlowUpper;
+      burnRate2 = massFlowUpper;
+      totalBurnTime2 = p.oFuel / burnRate2;
+    } else {
+      totalBurnTime2 = PHASE2_DUR;
+      burnRate2 = p.oFuel / totalBurnTime2;
+    }
+
+    const burned2 = Math.min(burnRate2 * dt, simM - minMass);
+    if (burned2 <= 0 || simM <= minMass + 1) {
+      simM = minMass;
+      setPhase(4);
+      simState = 'done';
+      document.getElementById('status-msg').textContent = 'Nutzlast im Orbit ✓';
+      document.getElementById('btn-start').disabled = false;
+      pushHistory();
+      drawAll();
+      return;
+    }
+
+    simM -= burned2;
+    const thrust_a2 = (burnRate2 * p.vGas) / simM;
+    simV += (thrust_a2 - g) * dt;
+    simT += dt;
+    simH += simV * dt;
+    if (simH < 0) { simH = 0; }
+    // Update live remaining burn time display for P2
+    if (document.getElementById('burntime-p2')) {
+      const remainingFuelP2 = Math.max(simM - (p.oDry + p.mPL), 0);
+      const remTime2 = burnRate2 > 0 ? Math.round(remainingFuelP2 / burnRate2) : 0;
+      document.getElementById('burntime-p2').textContent = remTime2 + ' s';
+      if (document.getElementById('massflow-p2')) document.getElementById('massflow-p2').textContent = (burnRate2).toLocaleString('de-DE') + ' kg/s';
+    }
+  }
+
+  pushHistory();
+  drawAll();
+  updateReadouts();
+  animFrame = requestAnimationFrame(tick);
+}
+
+function scheduleNext(delayMs, cb) {
+  setTimeout(cb, delayMs);
+}
+
+function pushHistory() {
+  // Downsample: only push every ~0.5 sim seconds
+  const lastT = histT[histT.length-1] || 0;
+  if (simT - lastT >= 0.5 || histT.length === 0) {
+    histT.push(simT);
+    histH.push(simH / 1000); // km
+    histV.push(simV);
+    histM.push(simM / 1000); // t
+  }
+}
+
+function updateReadouts() {
+  document.getElementById('rd-alt').textContent  = fmtDE(simH/1000, 1) + ' km';
+  document.getElementById('rd-vel').textContent  = fmtDE(simV, 0) + ' m/s';
+  document.getElementById('rd-mass').textContent = fmtDE(simM/1000, 1) + ' t';
+  document.getElementById('rd-time').textContent = fmtDE(simT, 0) + ' s';
+  document.getElementById('alt-label').textContent = 'Höhe: ' + fmtDE(simH/1000, 1) + ' km';
+}
+
+// ── Draw all ──────────────────────────────────────────────────────────────
+function drawAll() {
+  drawRocket();
+  drawChart('cvs-alt',  histT, histH, '#185FA5', 'km', 0);
+  drawChart('cvs-vel',  histT, histV, '#1D9E75', 'm/s', 0);
+  drawChart('cvs-mass', histT, histM, '#BA7517', 't', 1);
+}
+
+// ── Rocket drawing ────────────────────────────────────────────────────────
+function drawRocket() {
+  const cvs = document.getElementById('cvs-rocket');
+  const W = cvs.width, H = cvs.height;
+  const ctx = cvs.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+
+  // Sky gradient based on altitude
+  const altKm = simH / 1000;
+  const skyT = Math.min(altKm / 120, 1);
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  const c1 = lerpColor([10,15,30], [2,5,15], skyT);
+  const c2 = lerpColor([20,40,80], [5,10,30], skyT);
+  grad.addColorStop(0, `rgb(${c1})`);
+  grad.addColorStop(1, `rgb(${c2})`);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Stars
+  drawStars(ctx, W, H, skyT);
+
+  // Ground line (only at low altitudes)
+  if (altKm < 5) {
+    const groundY = H - 10 - (altKm / 5) * (H - 60);
+    ctx.fillStyle = '#2d5a1b';
+    ctx.fillRect(0, groundY, W, H - groundY);
+    ctx.fillStyle = '#3a7a24';
+    ctx.fillRect(0, groundY, W, 3);
+  }
+
+  // Rocket position (visual): rockets moves up as altitude grows
+  const rocketVisualY = H * 0.55 - Math.min(altKm / 200, 1) * H * 0.3;
+  drawRocketBody(ctx, W/2, rocketVisualY, simPhase);
+}
+
+let stars = null;
+function drawStars(ctx, W, H, skyT) {
+  if (!stars) {
+    stars = [];
+    for (let i=0; i<80; i++) {
+      stars.push({ x: Math.random()*W, y: Math.random()*H, r: Math.random()*1.2+0.3, b: Math.random() });
+    }
+  }
+  ctx.save();
+  for (const s of stars) {
+    ctx.globalAlpha = s.b * skyT * 0.9;
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function lerpColor(a, b, t) {
+  return a.map((v,i) => Math.round(v + (b[i]-v)*t));
+}
+
+function drawRocketBody(ctx, cx, cy, phase) {
+  const nBoost = variant === 64 ? 4 : 2;
+
+  // ── Booster flames (phase 1) ──
+  if (phase === 1) {
+    const boosterXs = nBoost === 2 ? [-22, 22] : [-30, -10, 10, 30];
+    for (const bx of boosterXs) {
+      drawFlame(ctx, cx + bx, cy + 62, 8, 22 + Math.random()*8);
+    }
+    // Core flame
+    drawFlame(ctx, cx, cy + 75, 12, 28 + Math.random()*10);
+  }
+  // ── Oberstufe flame (phase 3) ──
+  if (phase === 3) {
+    drawFlame(ctx, cx, cy + 48, 7, 18 + Math.random()*7);
+  }
+
+  // ── Boosters (phase 1 or before) ──
+  if (phase <= 1) {
+    const boosterXs = nBoost === 2 ? [-22, 22] : [-30, -10, 10, 30];
+    for (const bx of boosterXs) {
+      roundRect(ctx, cx + bx - 7, cy + 10, 14, 52, 4);
+      ctx.fillStyle = phase === 1 ? '#e8a040' : '#c8903a';
+      ctx.fill();
+      ctx.strokeStyle = '#a06820';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      // Nozzle
+      ctx.fillStyle = '#444';
+      roundRect(ctx, cx + bx - 5, cy + 60, 10, 6, 2);
+      ctx.fill();
+    }
+  }
+
+  // ── Kernstufe (phase 1,2,3) ──
+  if (phase <= 3) {
+    roundRect(ctx, cx - 14, cy + 5, 28, 70, 5);
+    ctx.fillStyle = phase >= 3 ? '#555' : '#d0d8e8';
+    ctx.fill();
+    ctx.strokeStyle = '#8899bb';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    // Nozzle
+    ctx.fillStyle = '#333';
+    roundRect(ctx, cx - 10, cy + 72, 20, 8, 3);
+    ctx.fill();
+    // Stripes
+    ctx.fillStyle = '#185FA5';
+    ctx.fillRect(cx - 14, cy + 18, 28, 4);
+    ctx.fillRect(cx - 14, cy + 40, 28, 4);
+  }
+
+  // ── Oberstufe ──
+  if (phase <= 4) {
+    roundRect(ctx, cx - 11, cy - 22, 22, 30, 4);
+    ctx.fillStyle = phase >= 4 ? '#8aadd4' : '#e8eef8';
+    ctx.fill();
+    ctx.strokeStyle = '#8899bb';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    // Oberstufe nozzle
+    ctx.fillStyle = '#555';
+    roundRect(ctx, cx - 7, cy + 7, 14, 6, 2);
+    ctx.fill();
+  }
+
+  // ── Fairing (Nutzlastverkleidung) ──
+  if (phase <= 3) {
+    ctx.beginPath();
+    ctx.moveTo(cx - 11, cy - 22);
+    ctx.lineTo(cx - 8, cy - 50);
+    ctx.lineTo(cx, cy - 62);
+    ctx.lineTo(cx + 8, cy - 50);
+    ctx.lineTo(cx + 11, cy - 22);
+    ctx.closePath();
+    ctx.fillStyle = '#f0f4fc';
+    ctx.fill();
+    ctx.strokeStyle = '#8899bb';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    // ESA stripe
+    ctx.fillStyle = '#185FA5';
+    ctx.fillRect(cx - 3, cy - 54, 6, 18);
+  }
+
+  // ── Satellite (phase 4) ──
+  if (phase === 4) {
+    ctx.fillStyle = '#ffd700';
+    ctx.fillRect(cx - 2, cy - 36, 4, 18);
+    ctx.fillStyle = '#3399ff';
+    roundRect(ctx, cx - 10, cy - 50, 20, 14, 3);
+    ctx.fill();
+    // Solar panels
+    ctx.fillStyle = '#1a6fa8';
+    ctx.fillRect(cx - 28, cy - 47, 16, 8);
+    ctx.fillRect(cx + 12, cy - 47, 16, 8);
+    ctx.strokeStyle = '#555';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(cx - 28, cy - 47, 16, 8);
+    ctx.strokeRect(cx + 12, cy - 47, 16, 8);
+    // Panel lines
+    for (let i=1; i<4; i++) {
+      ctx.beginPath();
+      ctx.moveTo(cx - 28 + i*4, cy - 47);
+      ctx.lineTo(cx - 28 + i*4, cy - 39);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cx + 12 + i*4, cy - 47);
+      ctx.lineTo(cx + 12 + i*4, cy - 39);
+      ctx.stroke();
+    }
+  }
+
+  // ── Separation animation (phase 2) ──
+  if (phase === 2) {
+    ctx.save();
+    ctx.globalAlpha = 0.6;
+    for (let i=0; i<6; i++) {
+      ctx.fillStyle = `hsl(${30+i*20},90%,60%)`;
+      ctx.beginPath();
+      ctx.arc(cx + (Math.random()-0.5)*30, cy + 10 + Math.random()*30, 2+Math.random()*3, 0, Math.PI*2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
+function drawFlame(ctx, x, y, w, h) {
+  const grad = ctx.createRadialGradient(x, y, 0, x, y+h*0.6, h);
+  grad.addColorStop(0, 'rgba(255,255,220,0.95)');
+  grad.addColorStop(0.3, 'rgba(255,160,30,0.85)');
+  grad.addColorStop(0.7, 'rgba(255,60,0,0.5)');
+  grad.addColorStop(1, 'rgba(255,0,0,0)');
+  ctx.beginPath();
+  ctx.ellipse(x, y + h*0.4, w*0.5, h*0.7, 0, 0, Math.PI*2);
+  ctx.fillStyle = grad;
+  ctx.fill();
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y);
+  ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h-r);
+  ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  ctx.lineTo(x+r, y+h);
+  ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+  ctx.lineTo(x, y+r);
+  ctx.quadraticCurveTo(x, y, x+r, y);
+  ctx.closePath();
+}
+
+// ── Chart drawing ─────────────────────────────────────────────────────────
+function drawChart(id, xs, ys, color, unit, decimals) {
+  const cvs = document.getElementById(id);
+  if (!cvs) return;
+  const W = cvs.offsetWidth || cvs.width;
+  const H = cvs.offsetHeight || cvs.height;
+  cvs.width = W; cvs.height = H;
+  const ctx = cvs.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+
+  if (xs.length < 2) {
+    ctx.fillStyle = '#ccc';
+    ctx.font = '11px IBM Plex Mono, monospace';
+    ctx.fillText('Warte auf Daten …', 8, H/2 + 4);
+    return;
+  }
+
+  const pad = { t: 6, r: 8, b: 18, l: 44 };
+  const cW = W - pad.l - pad.r;
+  const cH = H - pad.t - pad.b;
+
+  const minY = 0;
+  const maxY = Math.max(...ys) * 1.08 || 1;
+  const minX = 0;
+  const maxX = xs[xs.length-1] || 1;
+
+  const sx = v => pad.l + (v - minX) / (maxX - minX) * cW;
+  const sy = v => pad.t + cH - (v - minY) / (maxY - minY) * cH;
+
+  // Grid
+  ctx.strokeStyle = '#e0ddd5';
+  ctx.lineWidth = 1;
+  for (let i=0; i<=3; i++) {
+    const y = pad.t + cH * i / 3;
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + cW, y); ctx.stroke();
+    const val = maxY - (maxY - minY) * i / 3;
+    ctx.fillStyle = '#999';
+    ctx.font = '9px IBM Plex Mono, monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(fmtDE(val, decimals), pad.l - 3, y + 3);
+  }
+
+  // X axis labels
+  ctx.fillStyle = '#aaa';
+  ctx.font = '9px IBM Plex Mono, monospace';
+  ctx.textAlign = 'center';
+  for (let i=0; i<=4; i++) {
+    const t = minX + (maxX - minX) * i / 4;
+    ctx.fillText(Math.round(t) + 's', sx(t), H - 4);
+  }
+
+  // Area fill
+  const grad = ctx.createLinearGradient(0, pad.t, 0, pad.t + cH);
+  grad.addColorStop(0, color + '33');
+  grad.addColorStop(1, color + '08');
+  ctx.beginPath();
+  ctx.moveTo(sx(xs[0]), sy(ys[0]));
+  for (let i=1; i<xs.length; i++) ctx.lineTo(sx(xs[i]), sy(ys[i]));
+  ctx.lineTo(sx(xs[xs.length-1]), sy(minY));
+  ctx.lineTo(sx(xs[0]), sy(minY));
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  ctx.moveTo(sx(xs[0]), sy(ys[0]));
+  for (let i=1; i<xs.length; i++) ctx.lineTo(sx(xs[i]), sy(ys[i]));
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  // Current value dot
+  if (xs.length > 1) {
+    const lx = sx(xs[xs.length-1]);
+    const ly = sy(ys[ys.length-1]);
+    ctx.beginPath();
+    ctx.arc(lx, ly, 3.5, 0, Math.PI*2);
+    ctx.fillStyle = color;
+    ctx.fill();
+  }
+}
+
+// ── Reset ─────────────────────────────────────────────────────────────────
+function resetSim() {
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  simState = 'idle'; simPhase = 0; simT = 0; simH = 0; simV = 0;
+  histT = []; histH = []; histV = []; histM = [];
+  lastTs = null;
+  setPhase(0);
+  document.getElementById('btn-start').disabled = false;
+  document.getElementById('status-msg').textContent = '';
+  document.getElementById('rd-alt').textContent = '0 km';
+  document.getElementById('rd-vel').textContent = '0 m/s';
+  document.getElementById('rd-time').textContent = '0 s';
+  updateStartMassDisplay();
+  const cvs = document.getElementById('cvs-rocket');
+  const ctx = cvs.getContext('2d');
+  ctx.clearRect(0, 0, cvs.width, cvs.height);
+  // Draw idle rocket
+  const grad = ctx.createLinearGradient(0,0,0,cvs.height);
+  grad.addColorStop(0,'#0a0f1e'); grad.addColorStop(1,'#141e40');
+  ctx.fillStyle = grad; ctx.fillRect(0,0,cvs.width,cvs.height);
+  ctx.fillStyle = '#2d5a1b'; ctx.fillRect(0, cvs.height-15, cvs.width, 15);
+  ctx.fillStyle = '#3a7a24'; ctx.fillRect(0, cvs.height-15, cvs.width, 3);
+  drawRocketBody(ctx, cvs.width/2, cvs.height*0.55, 0);
+  ['cvs-alt','cvs-vel','cvs-mass'].forEach(id => {
+    const c = document.getElementById(id);
+    const cx = c.getContext('2d');
+    cx.clearRect(0,0,c.width,c.height);
+    cx.fillStyle='#ccc'; cx.font='11px IBM Plex Mono,monospace';
+    cx.fillText('Simulation starten …', 8, c.height/2+4);
+  });
+  document.getElementById('alt-label').textContent = 'Höhe: 0 km';
+}
+
+document.getElementById('btn-start').addEventListener('click', startSim);
+document.getElementById('btn-reset').addEventListener('click', resetSim);
+
+// Initial draw
+resetSim();
+</script>
+</body>
+</html>
