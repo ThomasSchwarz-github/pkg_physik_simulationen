@@ -228,9 +228,9 @@
             <button class="var-btn active" id="btn-a62" onclick="setVariant(62)">A62 (2 Booster)</button>
             <button class="var-btn" id="btn-a64" onclick="setVariant(64)">A64 (4 Booster)</button>
           </div>
-                  <label class="toggle-label">
-                    <input type="checkbox" id="chk-thrust" checked> Realistisches Massendurchsatz-Modell aktiv
-                  </label>
+          <label class="toggle-label">
+            <input type="checkbox" id="chk-thrust" checked> Realistisches Massendurchsatz-Modell aktiv
+          </label>
           <label class="toggle-label">
             <input type="checkbox" id="chk-gravity"> Erdanziehung (g = 9,81 m/s²)
           </label>
@@ -514,6 +514,10 @@ function updateThrustDisplays() {
   if (!el) return;
   el.addEventListener('input', () => { updateThrustDisplays(); updateStartMassDisplay(); });
 });
+const thrustCheckbox = document.getElementById('chk-thrust');
+if (thrustCheckbox) {
+  thrustCheckbox.addEventListener('change', updateThrustDisplays);
+}
 
 // Initialize displays
 updateThrustDisplays();
