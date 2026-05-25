@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tongenerator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue-dark: #0C447C;
+    --blue-mid: #185FA5;
+    --blue-light: #E6F1FB;
+    --blue-border: #B5D4F4;
+    --teal-dark: #0F6E56;
+    --teal-mid: #1D9E75;
+    --teal-light: #E1F5EE;
+    --teal-border: #9FE1CB;
+    --gray-bg: #F8F7F4;
+    --gray-border: #D3D1C7;
+    --gray-text: #5F5E5A;
+    --text-main: #1a1917;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'IBM Plex Sans', sans-serif; background: #f5f3ef; color: var(--text-main); min-height: 100vh; }
+  .page { width: min(1100px, 100%); max-width: 1100px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+
+  .header { border-bottom: 2px solid var(--text-main); padding-bottom: 1.2rem; margin-bottom: 2rem; }
+  .header .kurs { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gray-text); font-weight: 500; margin-bottom: 0.4rem; }
+  .header h1 { font-family: 'Source Serif 4', serif; font-size: 2rem; font-weight: 600; line-height: 1.2; }
+  .header .meta { margin-top: 0.5rem; font-size: 13px; color: var(--gray-text); }
+
+  .intro-box { background: var(--blue-light); border-left: 3px solid var(--blue-mid); padding: 1rem 1.25rem; margin-bottom: 2rem; border-radius: 0 6px 6px 0; }
+  .intro-box p { font-size: 14.5px; line-height: 1.7; color: var(--blue-dark); }
+
+  /* Main card */
+  .sim-card { background: white; border: 1px solid var(--gray-border); border-radius: 10px; padding: 1.5rem; margin-bottom: 2rem; }
+  .sim-card h2 { font-family: 'Source Serif 4', serif; font-size: 1.15rem; font-weight: 600; margin-bottom: 1.25rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--gray-border); }
+
+  /* Two-column layout */
+  .sim-main { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; }
+  @media (max-width: 700px) { .sim-main { grid-template-columns: 1fr; } }
+
+  /* Controls column */
+  .field-label { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--gray-text); margin-bottom: 0.5rem; display: block; }
+
+  .freq-row { display: flex; gap: 0.75rem; align-items: stretch; margin-bottom: 1.25rem; }
+  .freq-input {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 2rem;
+    font-weight: 500;
+    width: 0; flex: 1;
+    padding: 0.55rem 0.9rem;
+    border: 1.5px solid var(--gray-border);
+    border-radius: 7px;
+    background: var(--gray-bg);
+    color: var(--text-main);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .freq-input:focus { border-color: var(--blue-mid); background: white; }
+  .freq-unit {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 1.1rem;
+    color: var(--gray-text);
+    align-self: center;
+    padding: 0 0.25rem;
+  }
+
+  .preset-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+  .preset-btn {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    padding: 0.3rem 0.7rem;
+    border-radius: 5px;
+    border: 1px solid var(--blue-border);
+    background: var(--blue-light);
+    color: var(--blue-dark);
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+  .preset-btn:hover { background: var(--blue-mid); color: white; border-color: var(--blue-mid); }
+
+  .waveform-row { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .wave-btn {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 0.4rem 0.9rem;
+    border-radius: 6px;
+    border: 1.5px solid var(--gray-border);
+    background: white;
+    color: var(--gray-text);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .wave-btn.active { background: var(--text-main); color: white; border-color: var(--text-main); }
+  .wave-btn:hover:not(.active) { border-color: var(--blue-mid); color: var(--blue-mid); }
+
+  .volume-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.75rem; }
+  .volume-row label { font-size: 12.5px; color: var(--gray-text); flex-shrink: 0; width: 60px; }
+  .volume-row input[type=range] { flex: 1; accent-color: var(--blue-mid); height: 4px; }
+  .volume-val { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; width: 36px; text-align: right; }
+
+  .btn-play {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 0.75rem 2.5rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    background: var(--text-main);
+    color: white;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    justify-content: center;
+  }
+  .btn-play:hover { background: #333; }
+  .btn-play.playing { background: #b91c1c; }
+  .btn-play.playing:hover { background: #991b1b; }
+
+  .status-bar { margin-top: 1rem; text-align: center; font-size: 12.5px; color: var(--gray-text); font-style: italic; min-height: 1.4em; }
+
+  /* Info column */
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+  @media (max-width: 500px) { .info-grid { grid-template-columns: 1fr; } }
+  .info-box { background: var(--gray-bg); border: 1px solid var(--gray-border); border-radius: 6px; padding: 0.8rem 1rem; }
+  .info-box .ib-title { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gray-text); margin-bottom: 0.4rem; }
+  .info-box p { font-size: 13px; line-height: 1.6; }
+  .formula { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; background: white; border: 1px solid var(--gray-border); border-radius: 4px; padding: 0.3rem 0.6rem; display: inline-block; margin-top: 0.3rem; }
+
+  .back-link { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 13px; color: var(--gray-text); text-decoration: none; margin-bottom: 1.5rem; }
+  .back-link:hover { color: var(--blue-mid); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <a href="index.html" class="back-link">‹ Zurück zur Übersicht</a>
+
+  <div class="header">
+    <div class="kurs">Physik · Akustik &amp; Wellen</div>
+    <h1>Tongenerator</h1>
+    <div class="meta">Erzeuge reine Töne direkt im Browser – keine Installation notwendig</div>
+  </div>
+
+  <div class="intro-box">
+    <p>Gib eine Frequenz ein und drücke <strong>Ton abspielen</strong>. Der Browser erzeugt den Ton synthetisch über die Web Audio API – es werden keine Audiodateien geladen. Wähle zusätzlich eine Wellenform und passe die Lautstärke an.</p>
+  </div>
+
+  <div class="sim-card">
+    <div class="sim-main">
+
+      <!-- Left: Controls -->
+      <div>
+        <label class="field-label">Frequenz</label>
+        <div class="freq-row">
+          <input class="freq-input" type="number" id="freq-input" min="20" max="20000" step="1" value="440" placeholder="440">
+          <span class="freq-unit">Hz</span>
+        </div>
+
+        <label class="field-label" style="margin-bottom:0.5rem;">Bekannte Frequenzen</label>
+        <div class="preset-row">
+          <button class="preset-btn" onclick="setFreq(220)">A3 · 220 Hz</button>
+          <button class="preset-btn" onclick="setFreq(261.63)">C4 · 262 Hz</button>
+          <button class="preset-btn" onclick="setFreq(440)">A4 · 440 Hz</button>
+          <button class="preset-btn" onclick="setFreq(880)">A5 · 880 Hz</button>
+          <button class="preset-btn" onclick="setFreq(1000)">1 000 Hz</button>
+          <button class="preset-btn" onclick="setFreq(4186)">C8 · 4 186 Hz</button>
+        </div>
+
+        <label class="field-label">Wellenform</label>
+        <div class="waveform-row">
+          <button class="wave-btn active" id="wave-sine"     onclick="setWave('sine')">Sinus</button>
+          <button class="wave-btn"        id="wave-square"   onclick="setWave('square')">Rechteck</button>
+          <button class="wave-btn"        id="wave-sawtooth" onclick="setWave('sawtooth')">Sägezahn</button>
+          <button class="wave-btn"        id="wave-triangle" onclick="setWave('triangle')">Dreieck</button>
+        </div>
+
+        <div class="volume-row">
+          <label>Lautstärke</label>
+          <input type="range" id="vol-slider" min="0" max="100" value="40">
+          <span class="volume-val" id="vol-val">40 %</span>
+        </div>
+
+        <button class="btn-play" id="btn-play" onclick="toggleTone()">
+          <span id="btn-icon">▶</span>
+          <span id="btn-label">Ton abspielen</span>
+        </button>
+        <div class="status-bar" id="status-bar"></div>
+      </div>
+
+      <!-- Right: Physics info -->
+      <div>
+        <h2>Physikalischer Hintergrund</h2>
+        <div class="info-grid">
+          <div class="info-box">
+            <div class="ib-title">Schallfrequenz</div>
+            <p>Der Mensch hört Töne im Bereich 20 Hz bis 20 000 Hz. Die Frequenz bestimmt die <strong>Tonhöhe</strong> – doppelte Frequenz entspricht einer Oktave höher.</p>
+            <div class="formula">f [Hz] = Schwingungen / Sekunde</div>
+          </div>
+          <div class="info-box">
+            <div class="ib-title">Wellenformen</div>
+            <p>Sinuston: reiner Grundton, keine Obertöne.<br>Rechteck &amp; Sägezahn: reich an Obertönen – klingen deshalb schärfer und werden z. B. in Synthesizern genutzt.</p>
+          </div>
+          <div class="info-box">
+            <div class="ib-title">Kammerton A4</div>
+            <p>International festgelegt auf <strong>440 Hz</strong>. Alle Instrumente eines Orchesters stimmen sich auf diesen Referenzton.</p>
+          </div>
+          <div class="info-box">
+            <div class="ib-title">Oktave</div>
+            <p>Eine Oktave nach oben verdoppelt die Frequenz; eine nach unten halbiert sie.</p>
+            <div class="formula">f_oben = 2 · f_unten</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+let audioCtx = null;
+let oscillator = null;
+let gainNode = null;
+let playing = false;
+let currentWave = 'sine';
+
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function setFreq(f) {
+  document.getElementById('freq-input').value = Math.round(f * 100) / 100;
+  if (playing) {
+    oscillator.frequency.setTargetAtTime(f, getAudioCtx().currentTime, 0.01);
+  }
+}
+
+function setWave(type) {
+  currentWave = type;
+  ['sine','square','sawtooth','triangle'].forEach(t => {
+    document.getElementById('wave-' + t).classList.toggle('active', t === type);
+  });
+  if (playing) oscillator.type = type;
+}
+
+document.getElementById('vol-slider').addEventListener('input', function() {
+  const pct = +this.value;
+  document.getElementById('vol-val').textContent = pct + ' %';
+  if (gainNode) gainNode.gain.setTargetAtTime(pct / 100 * 0.8, getAudioCtx().currentTime, 0.01);
+});
+
+function toggleTone() {
+  if (playing) {
+    stopTone();
+  } else {
+    startTone();
+  }
+}
+
+function startTone() {
+  const freq = parseFloat(document.getElementById('freq-input').value);
+  if (isNaN(freq) || freq < 20 || freq > 20000) {
+    document.getElementById('status-bar').textContent = 'Bitte eine Frequenz zwischen 20 und 20 000 Hz eingeben.';
+    return;
+  }
+
+  const ctx = getAudioCtx();
+  if (ctx.state === 'suspended') ctx.resume();
+
+  const vol = +document.getElementById('vol-slider').value / 100 * 0.8;
+
+  gainNode = ctx.createGain();
+  gainNode.gain.setValueAtTime(0, ctx.currentTime);
+  gainNode.gain.linearRampToValueAtTime(vol, ctx.currentTime + 0.015);
+  gainNode.connect(ctx.destination);
+
+  oscillator = ctx.createOscillator();
+  oscillator.type = currentWave;
+  oscillator.frequency.value = freq;
+  oscillator.connect(gainNode);
+  oscillator.start();
+
+  playing = true;
+  document.getElementById('btn-play').classList.add('playing');
+  document.getElementById('btn-icon').textContent = '■';
+  document.getElementById('btn-label').textContent = 'Ton stoppen';
+  document.getElementById('status-bar').textContent =
+    freq.toLocaleString('de-DE') + ' Hz · ' + currentWave + ' · läuft …';
+}
+
+function stopTone() {
+  if (!oscillator) return;
+  const ctx = getAudioCtx();
+  gainNode.gain.setTargetAtTime(0, ctx.currentTime, 0.015);
+  oscillator.stop(ctx.currentTime + 0.08);
+  oscillator = null;
+  gainNode = null;
+  playing = false;
+  document.getElementById('btn-play').classList.remove('playing');
+  document.getElementById('btn-icon').textContent = '▶';
+  document.getElementById('btn-label').textContent = 'Ton abspielen';
+  document.getElementById('status-bar').textContent = '';
+}
+
+window.addEventListener('beforeunload', stopTone);
+</script>
+</body>
+</html>
