@@ -62,6 +62,12 @@
   .control-box.nutzlast .control-label { color: var(--red-dark); }
   .control-box.options .control-label { color: #444; }
 
+  .burn-progress { margin-top: 0.85rem; display: grid; gap: 0.5rem; }
+  .burn-progress__row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 0.5rem; font-size: 12px; }
+  .burn-progress__bar { background: #e5e7eb; border-radius: 999px; overflow: hidden; height: 0.6rem; }
+  .burn-progress__fill { display: block; width: 100%; height: 100%; background: var(--blue-mid); transition: width 0.2s ease; }
+  .burn-progress__label { color: var(--gray-text); font-size: 11px; }
+
   .slider-row { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.45rem; }
   .slider-row:last-child { margin-bottom: 0; }
   .slider-row label { font-size: 12.5px; color: var(--gray-text); width: 120px; flex-shrink: 0; }
@@ -223,7 +229,7 @@
             <button class="var-btn" id="btn-a64" onclick="setVariant(64)">A64 (4 Booster)</button>
           </div>
                   <label class="toggle-label">
-                    <input type="checkbox" id="chk-thrust"> Leistungskonstante Verbrennung (Thrust-Modell)
+                    <input type="checkbox" id="chk-thrust" checked> Realistisches Massendurchsatz-Modell aktiv
                   </label>
           <label class="toggle-label">
             <input type="checkbox" id="chk-gravity"> Erdanziehung (g = 9,81 m/s²)
@@ -231,7 +237,7 @@
           <label class="toggle-label">
             <input type="checkbox" id="chk-tsiol" checked> Tsiolkowski-Modus (kontinuierlich)
           </label>
-          <!-- Mass-flow sliders for adjustable mass flow (±50% of reference) -->
+          <!-- Massendurchsatz-Slider (±50 % Referenz) -->
           <div style="width:100%; margin-top:8px; display:grid; grid-template-columns: 1fr 1fr; gap:0.6rem; align-items:start;">
             <div style="font-size:12px;">
               <label style="display:block; font-size:12px; margin-bottom:6px;">Booster Massendurchsatz (kg/s, pro Booster)</label>
@@ -250,17 +256,13 @@
             </div>
             <div style="font-size:12px;">
               <div style="font-size:12px; margin-bottom:6px;">Berechnete Werte</div>
-              <div style="display:flex; justify-content:space-between; font-size:12px;">
-                <div>Massendurchsatz P1:</div><div id="massflow-p1" style="font-family: 'IBM Plex Mono';">— kg/s</div>
-              </div>
-              <div style="display:flex; justify-content:space-between; font-size:12px;">
-                <div>Burn time P1:</div><div id="burntime-p1" style="font-family: 'IBM Plex Mono';">— s</div>
-              </div>
-              <div style="display:flex; justify-content:space-between; font-size:12px; margin-top:6px;">
-                <div>Massendurchsatz P2:</div><div id="massflow-p2" style="font-family: 'IBM Plex Mono';">— kg/s</div>
-              </div>
-              <div style="display:flex; justify-content:space-between; font-size:12px;">
-                <div>Burn time P2:</div><div id="burntime-p2" style="font-family: 'IBM Plex Mono';">— s</div>
+              <div class="burn-progress">
+                <div class="burn-progress__row"><span>Massendurchsatz Booster+Kernstufe</span><span id="massflow-p1" style="font-family: 'IBM Plex Mono';">— kg/s</span></div>
+                <div class="burn-progress__row"><span>Verbleibende Brenndauer Booster+Kernstufe</span><span id="burntime-p1" style="font-family: 'IBM Plex Mono';">— s</span></div>
+                <div class="burn-progress__bar"><span id="burnfill-p1" class="burn-progress__fill"></span></div>
+                <div class="burn-progress__row"><span>Massendurchsatz Oberstufe</span><span id="massflow-p2" style="font-family: 'IBM Plex Mono';">— kg/s</span></div>
+                <div class="burn-progress__row"><span>Verbleibende Brenndauer Oberstufe</span><span id="burntime-p2" style="font-family: 'IBM Plex Mono';">— s</span></div>
+                <div class="burn-progress__bar"><span id="burnfill-p2" class="burn-progress__fill"></span></div>
               </div>
             </div>
           </div>
@@ -479,7 +481,7 @@ updateStartMassDisplay();
 sliders.forEach(([sid]) => document.getElementById(sid).addEventListener('input', updateStartMassDisplay));
 document.getElementById('chk-gravity').addEventListener('change', updateStartMassDisplay);
 
-// ── Mass-flow UI updates ─────────────────────────────────────────────────
+// ── Massenstrom-UI-Aktualisierung ───────────────────────────────────────────
 function updateThrustDisplays() {
   const mfB = document.getElementById('sl-mf-booster') ? +document.getElementById('sl-mf-booster').value : 900;
   const mfC = document.getElementById('sl-mf-core') ? +document.getElementById('sl-mf-core').value : 500;
@@ -502,6 +504,8 @@ function updateThrustDisplays() {
   if (document.getElementById('burntime-p1')) document.getElementById('burntime-p1').textContent = (burntimeP1 === '—' ? '—' : burntimeP1 + ' s');
   if (document.getElementById('massflow-p2')) document.getElementById('massflow-p2').textContent = massflowP2.toLocaleString('de-DE') + ' kg/s';
   if (document.getElementById('burntime-p2')) document.getElementById('burntime-p2').textContent = (burntimeP2 === '—' ? '—' : burntimeP2 + ' s');
+  if (document.getElementById('burnfill-p1')) document.getElementById('burnfill-p1').style.width = '100%';
+  if (document.getElementById('burnfill-p2')) document.getElementById('burnfill-p2').style.width = '100%';
 }
 
 // Attach listeners for new mass-flow sliders
@@ -581,6 +585,8 @@ function tick(ts) {
     if (burned <= 0 || simM <= p.mAfterP1Burn + 1) {
       // Phase 1 done (mass already at or below after-P1)
       simM = p.mAfterP1Burn;
+      if (document.getElementById('burnfill-p1')) document.getElementById('burnfill-p1').style.width = '0%';
+      if (document.getElementById('burntime-p1')) document.getElementById('burntime-p1').textContent = '0 s';
       setPhase(2);
       document.getElementById('status-msg').textContent = 'Stufentrennung …';
       scheduleNext(SEP_DUR * 1000 / SIM_SPEED, () => {
@@ -595,7 +601,7 @@ function tick(ts) {
     }
 
     simM -= burned;
-    // Thrust acceleration: F = mass_flow * vGas, a = F/m
+    // Schubbeschleunigung: F = mass_flow * vGas, a = F/m
     const thrust_a = (burnRate * p.vGas) / simM;
     simV += (thrust_a - g) * dt;
     simT += dt;
@@ -607,6 +613,11 @@ function tick(ts) {
       const remTime = burnRate > 0 ? Math.round(remainingFuelP1 / burnRate) : 0;
       document.getElementById('burntime-p1').textContent = remTime + ' s';
       if (document.getElementById('massflow-p1')) document.getElementById('massflow-p1').textContent = (burnRate).toLocaleString('de-DE') + ' kg/s';
+      if (document.getElementById('burnfill-p1')) {
+        const fuelP1 = p.boosterTotalFuel + p.kFuel;
+        const pct = fuelP1 > 0 ? Math.max(0, Math.min(100, (remainingFuelP1 / fuelP1) * 100)) : 0;
+        document.getElementById('burnfill-p1').style.width = pct + '%';
+      }
     }
 
   } else if (simPhase === 3) {
@@ -627,6 +638,8 @@ function tick(ts) {
     const burned2 = Math.min(burnRate2 * dt, simM - minMass);
     if (burned2 <= 0 || simM <= minMass + 1) {
       simM = minMass;
+      if (document.getElementById('burnfill-p2')) document.getElementById('burnfill-p2').style.width = '0%';
+      if (document.getElementById('burntime-p2')) document.getElementById('burntime-p2').textContent = '0 s';
       setPhase(4);
       simState = 'done';
       document.getElementById('status-msg').textContent = 'Nutzlast im Orbit ✓';
@@ -648,6 +661,10 @@ function tick(ts) {
       const remTime2 = burnRate2 > 0 ? Math.round(remainingFuelP2 / burnRate2) : 0;
       document.getElementById('burntime-p2').textContent = remTime2 + ' s';
       if (document.getElementById('massflow-p2')) document.getElementById('massflow-p2').textContent = (burnRate2).toLocaleString('de-DE') + ' kg/s';
+      if (document.getElementById('burnfill-p2')) {
+        const pct2 = p.oFuel > 0 ? Math.max(0, Math.min(100, (remainingFuelP2 / p.oFuel) * 100)) : 0;
+        document.getElementById('burnfill-p2').style.width = pct2 + '%';
+      }
     }
   }
 
