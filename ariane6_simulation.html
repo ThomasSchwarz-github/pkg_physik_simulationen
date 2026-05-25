@@ -471,6 +471,7 @@ function setVariant(v) {
   document.getElementById('btn-a62').className = 'var-btn' + (v===62?' active':'');
   document.getElementById('btn-a64').className = 'var-btn' + (v===64?' active':'');
   updateStartMassDisplay();
+  updateThrustDisplays();
 }
 
 function updateStartMassDisplay() {
@@ -489,20 +490,30 @@ function updateThrustDisplays() {
   const nBoost = variant === 64 ? 4 : 2;
   const totalFuelP1 = (nBoost * (+document.getElementById('sl-b-fuel').value)) + (+document.getElementById('sl-k-fuel').value);
   const totalFuelP2 = (+document.getElementById('sl-o-fuel').value);
+  const thrustModel = document.getElementById('chk-thrust') ? document.getElementById('chk-thrust').checked : true;
 
   // Update small value displays
   if (document.getElementById('v-mf-booster')) document.getElementById('v-mf-booster').textContent = mfB.toLocaleString('de-DE') + ' kg/s';
   if (document.getElementById('v-mf-core')) document.getElementById('v-mf-core').textContent = mfC.toLocaleString('de-DE') + ' kg/s';
   if (document.getElementById('v-mf-upper')) document.getElementById('v-mf-upper').textContent = mfU.toLocaleString('de-DE') + ' kg/s';
 
-  const massflowP1 = nBoost * mfB + mfC;
-  const burntimeP1 = massflowP1 > 0 ? Math.round(totalFuelP1 / massflowP1) : '—';
-  const massflowP2 = mfU;
-  const burntimeP2 = massflowP2 > 0 ? Math.round(totalFuelP2 / massflowP2) : '—';
+  let massflowP1, burntimeP1;
+  let massflowP2, burntimeP2;
+  if (thrustModel) {
+    massflowP1 = nBoost * mfB + mfC;
+    burntimeP1 = massflowP1 > 0 ? Math.round(totalFuelP1 / massflowP1) : '—';
+    massflowP2 = mfU;
+    burntimeP2 = massflowP2 > 0 ? Math.round(totalFuelP2 / massflowP2) : '—';
+  } else {
+    massflowP1 = totalFuelP1 / PHASE1_DUR;
+    burntimeP1 = PHASE1_DUR;
+    massflowP2 = totalFuelP2 / PHASE2_DUR;
+    burntimeP2 = PHASE2_DUR;
+  }
 
-  if (document.getElementById('massflow-p1')) document.getElementById('massflow-p1').textContent = massflowP1.toLocaleString('de-DE') + ' kg/s';
+  if (document.getElementById('massflow-p1')) document.getElementById('massflow-p1').textContent = massflowP1.toLocaleString('de-DE', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' kg/s';
   if (document.getElementById('burntime-p1')) document.getElementById('burntime-p1').textContent = (burntimeP1 === '—' ? '—' : burntimeP1 + ' s');
-  if (document.getElementById('massflow-p2')) document.getElementById('massflow-p2').textContent = massflowP2.toLocaleString('de-DE') + ' kg/s';
+  if (document.getElementById('massflow-p2')) document.getElementById('massflow-p2').textContent = massflowP2.toLocaleString('de-DE', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' kg/s';
   if (document.getElementById('burntime-p2')) document.getElementById('burntime-p2').textContent = (burntimeP2 === '—' ? '—' : burntimeP2 + ' s');
   if (document.getElementById('burnfill-p1')) document.getElementById('burnfill-p1').style.width = '100%';
   if (document.getElementById('burnfill-p2')) document.getElementById('burnfill-p2').style.width = '100%';
@@ -516,8 +527,15 @@ function updateThrustDisplays() {
 });
 const thrustCheckbox = document.getElementById('chk-thrust');
 if (thrustCheckbox) {
-  thrustCheckbox.addEventListener('change', updateThrustDisplays);
+  thrustCheckbox.addEventListener('change', () => { updateThrustDisplays(); updateStartMassDisplay(); });
 }
+
+// Ensure fuel/variant changes also refresh burn displays
+sliders.forEach(([sid]) => {
+  const el = document.getElementById(sid);
+  if (!el) return;
+  el.addEventListener('input', updateThrustDisplays);
+});
 
 // Initialize displays
 updateThrustDisplays();
